@@ -1,0 +1,1309 @@
+@import 'tailwindcss';
+
+@source '../../storage/framework/views/*.php';
+
+/* ==========================================================================
+   Tenpai — « l'interface, c'est la table »
+
+   On est assis au jansō : le tapis vert occupe la pièce, les tuiles sont les
+   seuls objets brillants, et le papier (fiche de score, barème) est posé dessus.
+   Juste = vermillon du sceau (comme une copie corrigée au Japon), à revoir = indigo.
+
+   1. Primitives · 2. Jetons sémantiques (clair, sombre) · 3. Thème Tailwind
+   4. Base · 5. Tapis et papier · 6. Tuiles · 7. Composants
+   ========================================================================== */
+
+/* ---------- 1. Primitives ---------- */
+:root {
+    --felt-950: #0a1c17;
+    --felt-900: #0f271f;
+    --felt-800: #143328;
+    --felt-700: #1b4334;
+    --felt-600: #235442;
+    --felt-500: #2e6853;
+    --felt-300: #8fb3a2;
+    --felt-100: #e3ede6;
+
+    --zoge-50: #fbf8f0;   /* ivoire */
+    --zoge-100: #f5efe0;
+    --zoge-200: #ebe3cf;
+    --zoge-300: #dacfb4;
+    --zoge-400: #b9ab8c;
+
+    --sumi-950: #141210;  /* encre */
+    --sumi-900: #1d1b17;
+    --sumi-800: #2a2722;
+    --sumi-700: #3c3830;
+    --sumi-500: #6b6457;
+    --sumi-400: #8e8678;
+
+    --shu-700: #93281c;   /* vermillon du sceau */
+    --shu-600: #ad3022;
+    --shu-500: #c23a2b;
+    --shu-400: #df624f;
+    --shu-100: #f7dfd8;
+
+    --ai-700: #22395f;    /* indigo */
+    --ai-600: #2e4c7e;
+    --ai-400: #7f9dd1;
+    --ai-100: #e0e7f3;
+
+    --ukon-600: #c48a1c;  /* safran du dos des tuiles */
+    --ukon-500: #e3a72f;
+    --ukon-300: #f3cd7a;
+    --ukon-100: #fbefd2;
+}
+
+/* ---------- 2. Jetons sémantiques ---------- */
+:root {
+    /* La pièce : papier washi, légèrement teinté par la saison. */
+    --room: #f4eddc;
+    --room-deep: #e7dcc2;
+
+    /* La table : feutre vert cerné de bois. */
+    --felt: var(--felt-700);
+    --felt-deep: var(--felt-900);
+    --felt-ink: #edf3ee;
+    --felt-muted: #a7c2b4;
+    --felt-line: rgb(255 255 255 / 0.12);
+    --felt-raised: rgb(255 255 255 / 0.07);
+    --wood: #6e4428;
+    --wood-light: #8a5a36;
+    --wood-dark: #3f2514;
+
+    /* Le papier : cartons montés comme des estampes. */
+    --paper: #fdfbf5;
+    --paper-sunk: #f4eddd;
+    --paper-line: #e4dac3;
+    --mount: rgb(176 132 52 / 0.38);
+    --ink: var(--sumi-900);
+    --ink-muted: #625b4f;
+    --ink-faint: #8e8678;
+    --ink-line: rgb(29 27 23 / 0.13);
+    --ink-wash: rgb(29 27 23 / 0.05);
+
+    --ok: var(--shu-600);
+    --ok-soft: var(--shu-100);
+    --ko: var(--ai-600);
+    --ko-soft: var(--ai-100);
+    --gilt: var(--ukon-500);
+    --gilt-ink: #8f6210;
+    --gilt-soft: var(--ukon-100);
+    --focus: var(--ai-600);
+
+    /* Le décor : soleil, brumes dorées, bambous, moineaux, collines. */
+    --orb: #d5503a;
+    --orb-glow: transparent;
+    --mist: #d6a541;
+    --mist-op: 0.34;
+    --bamboo: #2f6343;
+    --hill: #1d1b17;
+    --hill-op: 0.09;
+    --sparrow: #8a5a3b;
+    --cheek: #fbf8f0;
+    --branch: #4a2c1e;
+    --blossom: #f2b5c1;
+    --blossom-deep: #d9768f;
+    --leaf-1: #c2412b;
+    --leaf-2: #d9782c;
+    --leaf-3: #b98a2c;
+    --grass: #b39457;
+    --snow: #ffffff;
+    --decor-op: 1;
+
+    --tile-shadow: rgb(12 30 22 / 0.5);
+
+    color-scheme: light;
+}
+
+/* Les saisons teintent le papier, le soleil et les brumes. */
+:root[data-season='printemps'] {
+    --room: #f6ede6;
+    --room-deep: #ecd9cf;
+    --orb: #df6650;
+    --mist: #e3a4a8;
+    --mist-op: 0.38;
+}
+
+:root[data-season='automne'] {
+    --room: #f3e7d1;
+    --room-deep: #e5d1ad;
+    --orb: #cd5527;
+    --mist: #d4983a;
+}
+
+:root[data-season='hiver'] {
+    --room: #eceeec;
+    --room-deep: #dbe0df;
+    --orb: #e2a596;
+    --mist: #aebbc0;
+    --mist-op: 0.42;
+    --bamboo: #3f6b58;
+    --hill: #4b5d68;
+    --hill-op: 0.14;
+}
+
+/* La nuit : la même scène, la lune à la place du soleil. */
+@media (prefers-color-scheme: dark) {
+    :root:not([data-theme='light']) {
+        --room: #131922;
+        --room-deep: #0c1118;
+
+        --felt: #183b2f;
+        --felt-deep: #0a1d16;
+        --felt-ink: #e4ece6;
+        --felt-muted: #8fab9d;
+        --felt-line: rgb(255 255 255 / 0.09);
+        --wood: #4a2d19;
+        --wood-light: #5d3a21;
+        --wood-dark: #24150a;
+
+        --paper: #1b212b;
+        --paper-sunk: #242b36;
+        --paper-line: #333b48;
+        --mount: rgb(214 165 65 / 0.22);
+        --ink: #ece4d2;
+        --ink-muted: #aaa392;
+        --ink-faint: #7f796d;
+        --ink-line: rgb(236 228 210 / 0.13);
+        --ink-wash: rgb(236 228 210 / 0.06);
+
+        --ok: var(--shu-400);
+        --ok-soft: #3d1f19;
+        --ko: var(--ai-400);
+        --ko-soft: #1d2638;
+        --gilt-ink: var(--ukon-300);
+        --gilt-soft: #3b2e12;
+        --focus: var(--ukon-300);
+
+        --orb: #f1e7cb;
+        --orb-glow: rgb(241 231 203 / 0.28);
+        --mist: #c9a24a;
+        --mist-op: 0.13;
+        --bamboo: #4d8a70;
+        --hill: #7d93a8;
+        --hill-op: 0.07;
+        --sparrow: #6b4e3c;
+        --cheek: #c8bea7;
+        --branch: #2c1d16;
+        --blossom: #b98593;
+        --blossom-deep: #9c5d71;
+        --leaf-1: #a33a29;
+        --leaf-2: #b5652a;
+        --leaf-3: #9b7629;
+        --grass: #6f6448;
+        --snow: #dfe6ec;
+        --decor-op: 0.75;
+
+        --tile-shadow: rgb(0 0 0 / 0.6);
+
+        color-scheme: dark;
+    }
+}
+
+/* ---------- 3. Thème Tailwind ---------- */
+@theme {
+    --font-sans: 'Zen Kaku Gothic New', ui-sans-serif, system-ui, sans-serif;
+    --font-display: 'Dela Gothic One', 'Zen Kaku Gothic New', ui-sans-serif, sans-serif;
+
+    --ease-snap: cubic-bezier(0.2, 0.9, 0.3, 1.15);
+}
+
+@theme inline {
+    --color-room: var(--room);
+    --color-felt: var(--felt);
+    --color-felt-deep: var(--felt-deep);
+    --color-felt-ink: var(--felt-ink);
+    --color-felt-muted: var(--felt-muted);
+    --color-felt-line: var(--felt-line);
+    --color-felt-raised: var(--felt-raised);
+    --color-paper: var(--paper);
+    --color-paper-sunk: var(--paper-sunk);
+    --color-paper-line: var(--paper-line);
+    --color-ink: var(--ink);
+    --color-ink-muted: var(--ink-muted);
+    --color-ink-faint: var(--ink-faint);
+    --color-ink-line: var(--ink-line);
+    --color-ink-wash: var(--ink-wash);
+    --color-ok: var(--ok);
+    --color-ok-soft: var(--ok-soft);
+    --color-ko: var(--ko);
+    --color-ko-soft: var(--ko-soft);
+    --color-gilt: var(--gilt);
+    --color-gilt-ink: var(--gilt-ink);
+    --color-gilt-soft: var(--gilt-soft);
+    --color-shu: var(--shu-500);
+    --color-ukon: var(--ukon-500);
+}
+
+/* ---------- 4. Base ---------- */
+@layer base {
+    html {
+        -webkit-text-size-adjust: 100%;
+        scrollbar-gutter: stable;
+        background-color: var(--room);
+    }
+
+    /* Le washi : un fond qui respire, avec ses fibres. */
+    body {
+        background-color: var(--room);
+        background-image:
+            url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='240' height='240'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 .42 0 0 0 0 .33 0 0 0 0 .18 0 0 0 .085 0'/%3E%3C/filter%3E%3Crect width='240' height='240' filter='url(%23n)'/%3E%3C/svg%3E"),
+            radial-gradient(70% 55% at 0% 100%, var(--room-deep), transparent 70%),
+            radial-gradient(60% 50% at 100% 0%, var(--room-deep), transparent 70%);
+        background-attachment: fixed;
+        color: var(--ink);
+        font-family: var(--font-sans);
+        line-height: 1.6;
+        -webkit-font-smoothing: antialiased;
+        min-height: 100dvh;
+    }
+
+    @media (prefers-color-scheme: dark) {
+        :root:not([data-theme='light']) body {
+            background-image:
+                url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='240' height='240'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 .85 0 0 0 0 .82 0 0 0 0 .74 0 0 0 .05 0'/%3E%3C/filter%3E%3Crect width='240' height='240' filter='url(%23n)'/%3E%3C/svg%3E"),
+                radial-gradient(70% 55% at 0% 100%, var(--room-deep), transparent 70%),
+                radial-gradient(60% 50% at 100% 0%, rgb(241 231 203 / 0.05), transparent 70%);
+        }
+    }
+
+    :focus-visible {
+        outline: 2px solid var(--focus);
+        outline-offset: 2px;
+        border-radius: 4px;
+    }
+
+    ::selection {
+        background: var(--ukon-300);
+        color: var(--sumi-900);
+    }
+
+    input[type='number'] {
+        -moz-appearance: textfield;
+        appearance: textfield;
+    }
+
+    input[type='number']::-webkit-inner-spin-button,
+    input[type='number']::-webkit-outer-spin-button {
+        -webkit-appearance: none;
+        margin: 0;
+    }
+
+    [x-cloak] {
+        display: none !important;
+    }
+}
+
+/* ---------- 5. Table, papier, brumes ---------- */
+@layer components {
+    /* La table : feutre vert dans un cadre de bois, posée dans la pièce. */
+    .felt {
+        position: relative;
+        color: var(--felt-ink);
+        border: 10px solid transparent;
+        border-radius: 1.1rem;
+        background:
+            radial-gradient(130% 120% at 50% 0%, rgb(255 255 255 / 0.08), transparent 55%) padding-box,
+            linear-gradient(var(--felt), var(--felt)) padding-box,
+            repeating-linear-gradient(97deg, rgb(255 255 255 / 0.05) 0 2px, transparent 2px 7px, rgb(0 0 0 / 0.06) 7px 8px, transparent 8px 13px) border-box,
+            linear-gradient(160deg, var(--wood-light), var(--wood) 35%, var(--wood-dark) 70%, var(--wood)) border-box;
+        box-shadow:
+            inset 0 0 0 1px rgb(0 0 0 / 0.35),
+            inset 0 3px 26px rgb(0 0 0 / 0.38),
+            0 1px 0 1px rgb(255 255 255 / 0.12),
+            0 28px 50px -24px rgb(50 30 12 / 0.55),
+            0 6px 14px -6px rgb(50 30 12 / 0.3);
+    }
+
+    /* Le papier : un carton monté, double filet doré comme une estampe encadrée. */
+    .paper {
+        background: var(--paper);
+        color: var(--ink);
+        border-radius: 0.5rem;
+        box-shadow:
+            inset 0 0 0 1px var(--ink-line),
+            inset 0 0 0 5px var(--paper),
+            inset 0 0 0 6px var(--mount),
+            0 16px 34px -20px rgb(60 40 18 / 0.45),
+            0 2px 5px rgb(60 40 18 / 0.08);
+    }
+
+    /* Brume dorée (kasumi) : les bandes des paravents, avec leurs paillettes d'or. */
+    .kasumi {
+        position: relative;
+        height: 2.75rem;
+        pointer-events: none;
+    }
+
+    .kasumi > span {
+        position: absolute;
+        height: 0.95rem;
+        border-radius: 999px;
+        background:
+            radial-gradient(circle at 20% 40%, rgb(255 236 170 / 0.9) 0 1.2px, transparent 1.6px) 0 0 / 23px 11px,
+            radial-gradient(circle at 70% 60%, rgb(255 236 170 / 0.7) 0 1px, transparent 1.4px) 0 0 / 37px 13px,
+            linear-gradient(90deg, transparent, var(--mist) 9%, var(--mist) 91%, transparent);
+        opacity: calc(var(--mist-op) + 0.22);
+    }
+
+    .display {
+        font-family: var(--font-display);
+        font-weight: 400;
+        letter-spacing: 0.01em;
+        line-height: 1.08;
+    }
+
+    .num {
+        font-variant-numeric: tabular-nums;
+    }
+}
+
+/* ---------- 6. Tuiles ---------- */
+@layer components {
+    .tile {
+        --t: var(--tile, 2.5rem);
+        position: relative;
+        display: inline-block;
+        flex: none;
+        width: var(--t);
+        line-height: 0;
+        transition: translate 0.18s var(--ease-snap), filter 0.18s;
+    }
+
+    .tile > svg {
+        display: block;
+        width: 100%;
+        height: auto;
+        overflow: visible;
+    }
+
+    .tile--side {
+        width: calc(var(--t) * 40 / 34);
+    }
+
+    /* Rangée de tuiles : une seule ombre portée pour toute la rangée. */
+    .tiles {
+        display: flex;
+        align-items: flex-end;
+        filter: drop-shadow(0 calc(var(--tile, 2.5rem) * 0.07) calc(var(--tile, 2.5rem) * 0.06) var(--tile-shadow));
+    }
+
+    .tile--win {
+        translate: 0 calc(var(--t) * -0.12);
+    }
+
+    .tile--win::after {
+        content: '';
+        position: absolute;
+        left: 18%;
+        right: 18%;
+        bottom: calc(var(--t) * -0.32);
+        height: 3px;
+        border-radius: 2px;
+        background: var(--gilt);
+    }
+
+    .tile--lit {
+        translate: 0 calc(var(--t) * -0.2);
+        filter: drop-shadow(0 0 calc(var(--t) * 0.12) rgb(243 205 122 / 0.85));
+    }
+
+    /* Petite tuile dans le texte (fiche, barème). */
+    .mini {
+        --tile: 1.5rem;
+        display: inline-flex;
+        vertical-align: middle;
+        gap: 1px;
+    }
+
+    .glyph {
+        display: inline-block;
+        width: 1em;
+        height: 1em;
+        flex: none;
+    }
+}
+
+/* ---------- 7. Composants ---------- */
+@layer components {
+    .btn {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.5rem;
+        min-height: 2.75rem;
+        padding: 0.5rem 1.15rem;
+        border-radius: 0.625rem;
+        font-weight: 700;
+        line-height: 1.2;
+        white-space: nowrap;
+        transition: background-color 0.15s, color 0.15s, box-shadow 0.15s, translate 0.1s;
+        cursor: pointer;
+        user-select: none;
+    }
+
+    .btn:active:not(:disabled) {
+        translate: 0 1px;
+    }
+
+    .btn:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+    }
+
+    /* L'action principale : un trait d'encre, avec le vermillon du sceau en dessous. */
+    .btn-primary {
+        background: var(--ink);
+        color: var(--paper);
+        box-shadow: 0 3px 0 var(--shu-600), 0 8px 18px -8px rgb(40 20 10 / 0.55);
+    }
+
+    .btn-primary:hover:not(:disabled) {
+        background: color-mix(in srgb, var(--ink) 84%, var(--paper));
+    }
+
+    /* Sur le tapis : un bâton de tenbou ivoire. */
+    .felt .btn-primary {
+        background: var(--zoge-50);
+        color: var(--sumi-900);
+        box-shadow: 0 2px 0 var(--zoge-400), 0 6px 16px -6px rgb(0 0 0 / 0.5);
+    }
+
+    .felt .btn-primary:hover:not(:disabled) {
+        background: #fff;
+    }
+
+    .btn-quiet {
+        color: inherit;
+        box-shadow: inset 0 0 0 1px currentColor;
+        opacity: 0.85;
+    }
+
+    .btn-quiet:hover:not(:disabled) {
+        opacity: 1;
+        background: rgb(127 127 127 / 0.1);
+    }
+
+    /* Sceau hanko : juste (vermillon), à revoir (indigo), réponse (indigo pâle). */
+    .hanko {
+        --c: var(--ok);
+        display: inline-grid;
+        place-items: center;
+        width: 4.25rem;
+        height: 4.25rem;
+        color: var(--c);
+        border: 3px solid var(--c);
+        border-radius: 0.5rem;
+        rotate: -8deg;
+        mix-blend-mode: multiply;
+        opacity: 0.92;
+        line-height: 1;
+    }
+
+    .hanko--ko {
+        --c: var(--ko);
+        rotate: 6deg;
+    }
+
+    .hanko--rev {
+        --c: var(--ko);
+        border-style: double;
+        border-width: 4px;
+    }
+
+    @media (prefers-color-scheme: dark) {
+        :root:not([data-theme='light']) .hanko {
+            mix-blend-mode: normal;
+        }
+    }
+
+    .hanko.is-new {
+        animation: stamp 0.42s var(--ease-snap) both;
+    }
+
+    @keyframes stamp {
+        0% {
+            opacity: 0;
+            scale: 1.9;
+        }
+        60% {
+            opacity: 1;
+            scale: 0.94;
+        }
+        100% {
+            opacity: 0.92;
+            scale: 1;
+        }
+    }
+
+    /* Champ numérique de la fiche. */
+    .field {
+        width: 5.5rem;
+        min-height: 2.75rem;
+        padding: 0.375rem 0.75rem;
+        border-radius: 0.5rem;
+        background: var(--paper-sunk);
+        color: var(--ink);
+        font-family: var(--font-display);
+        font-size: 1.25rem;
+        text-align: right;
+        font-variant-numeric: tabular-nums;
+        box-shadow: inset 0 0 0 1px var(--paper-line), inset 0 2px 3px rgb(0 0 0 / 0.06);
+    }
+
+    .field:focus {
+        outline: none;
+        box-shadow: inset 0 0 0 2px var(--ink), 0 0 0 4px rgb(227 167 47 / 0.35);
+    }
+
+    .field:disabled {
+        background: transparent;
+        box-shadow: inset 0 0 0 1px var(--paper-line);
+    }
+
+    .field.is-ok {
+        color: var(--ok);
+        box-shadow: inset 0 0 0 2px var(--ok);
+    }
+
+    .field.is-ko {
+        color: var(--ko);
+        text-decoration: line-through;
+        text-decoration-thickness: 2px;
+        box-shadow: inset 0 0 0 2px var(--ko);
+    }
+
+    /* Choix segmentés (attente, limite). */
+    .choice {
+        display: inline-flex;
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.05rem;
+        min-height: 2.75rem;
+        padding: 0.4rem 0.8rem;
+        border-radius: 0.5rem;
+        background: var(--paper-sunk);
+        box-shadow: inset 0 0 0 1px var(--paper-line);
+        font-weight: 700;
+        line-height: 1.2;
+        text-align: left;
+        cursor: pointer;
+        transition: background-color 0.12s, box-shadow 0.12s;
+    }
+
+    .choice small {
+        font-weight: 400;
+        color: var(--ink-muted);
+        font-size: 0.75rem;
+    }
+
+    .choice:hover:not(:has(input:disabled)) {
+        box-shadow: inset 0 0 0 1px var(--ink-muted);
+    }
+
+    .choice:has(input:checked) {
+        background: var(--ink);
+        color: var(--paper);
+        box-shadow: none;
+    }
+
+    .choice:has(input:checked) small {
+        color: inherit;
+        opacity: 0.75;
+    }
+
+    .choice:has(input:focus-visible) {
+        outline: 2px solid var(--gilt);
+        outline-offset: 2px;
+    }
+
+    .choice:has(input:disabled) {
+        cursor: default;
+    }
+
+    .choice.is-right {
+        box-shadow: inset 0 0 0 2px var(--ok);
+    }
+
+    .choice.is-wrong {
+        background: var(--ko-soft);
+        color: var(--ko);
+        box-shadow: inset 0 0 0 2px var(--ko);
+    }
+
+    .choice.is-wrong small {
+        color: inherit;
+    }
+
+    /* Petite tuile numérotée des étapes (一 二 三 四 五). */
+    .step-tile {
+        display: inline-grid;
+        place-items: center;
+        width: 1.75rem;
+        height: 2.25rem;
+        flex: none;
+        border-radius: 0.3rem;
+        background: linear-gradient(175deg, #fffdf7, var(--zoge-100) 55%, var(--zoge-200));
+        color: var(--sumi-900);
+        box-shadow: 0 1.5px 0 #d6cbae, 0 3.5px 0 var(--ukon-500), 0 4.5px 0 #a86f12;
+        font-size: 1.05rem;
+    }
+
+    /* Pastilles des yaku. */
+    .chip {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.4rem;
+        min-height: 2.25rem;
+        padding: 0.3rem 0.85rem;
+        border-radius: 999px;
+        background: var(--paper-sunk);
+        box-shadow: inset 0 0 0 1px var(--paper-line);
+        font-weight: 700;
+        line-height: 1.2;
+        transition: background-color 0.12s, box-shadow 0.12s;
+    }
+
+    button.chip:hover {
+        box-shadow: inset 0 0 0 1px var(--ink-muted);
+    }
+
+    .chip--picked {
+        background: var(--ink);
+        color: var(--paper);
+        box-shadow: none;
+    }
+
+    button.chip--picked:hover {
+        box-shadow: none;
+        opacity: 0.88;
+    }
+
+    .chip--ok {
+        background: var(--ok-soft);
+        color: var(--ok);
+        box-shadow: inset 0 0 0 1.5px var(--ok);
+    }
+
+    .chip--missed {
+        color: var(--ko);
+        box-shadow: inset 0 0 0 1.5px var(--ko);
+        background: transparent;
+        border: 0;
+        outline: 1.5px dashed var(--ko);
+        outline-offset: -1.5px;
+    }
+
+    .chip--extra {
+        background: var(--ko-soft);
+        color: var(--ko);
+        box-shadow: none;
+    }
+
+    /* Tuile gagnante dans le décompte des fu. */
+    .tile--mark::after {
+        content: "";
+        position: absolute;
+        left: 14%;
+        right: 14%;
+        bottom: calc(var(--t) * -0.22);
+        height: 2.5px;
+        border-radius: 2px;
+        background: var(--ok);
+    }
+}
+
+/* ---------- 8. Barème ---------- */
+@layer components {
+    /* Puces du calculateur (han, fu). */
+    .calc-chip {
+        min-width: 2.75rem;
+        min-height: 2.5rem;
+        padding: 0.35rem 0.7rem;
+        border-radius: 0.5rem;
+        background: var(--paper);
+        box-shadow: inset 0 0 0 1px var(--paper-line);
+        font-family: var(--font-display);
+        font-variant-numeric: tabular-nums;
+        transition: background-color 0.12s, color 0.12s, box-shadow 0.12s;
+    }
+
+    .calc-chip:hover:not(:disabled) {
+        box-shadow: inset 0 0 0 1px var(--ink-muted);
+    }
+
+    .calc-chip[aria-checked='true'] {
+        background: var(--ink);
+        color: var(--paper);
+        box-shadow: 0 2px 0 var(--shu-600);
+    }
+
+    .calc-chip:disabled {
+        opacity: 0.35;
+        cursor: not-allowed;
+    }
+
+    /* Tableau allégé : un chiffre par case ; la case choisie au calculateur est encrée. */
+    .points-grid td {
+        cursor: pointer;
+        transition: background-color 0.12s, color 0.12s;
+    }
+
+    .points-grid td:hover:not(:has(.limit-band)),
+    .points-grid tbody tr:hover > th {
+        background-color: var(--ink-wash);
+    }
+
+    .points-grid td.is-picked {
+        background: var(--ink);
+        color: var(--paper);
+        border-radius: 0.4rem;
+    }
+
+    /* La bande des limites : un seul chiffre pour toute la zone mangan d'une ligne. */
+    .limit-band {
+        display: flex;
+        align-items: baseline;
+        justify-content: space-between;
+        gap: 0.75rem;
+        padding: 0.35rem 0.75rem;
+        border-radius: 999px;
+        background: var(--gilt-soft);
+        color: var(--gilt-ink);
+        box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--gilt) 45%, transparent);
+    }
+
+    .limit-band .display {
+        color: var(--ink);
+    }
+
+    .limit-band.is-picked {
+        background: var(--ink);
+        color: var(--paper);
+    }
+
+    .limit-band.is-picked .display {
+        color: var(--paper);
+    }
+
+    /* La recette des fu : une ligne par étape, numérotée. */
+    .fu-recipe > li {
+        display: flex;
+        align-items: flex-start;
+        gap: 1rem;
+        padding: 1rem 0;
+        border-top: 1px solid var(--paper-line);
+    }
+
+    .fu-recipe > li:first-child {
+        border-top: 0;
+        padding-top: 0.25rem;
+    }
+
+    .fu-step {
+        display: grid;
+        place-items: center;
+        flex: none;
+        width: 2rem;
+        height: 2rem;
+        border-radius: 50%;
+        background: var(--ink);
+        color: var(--paper);
+        font-family: var(--font-display);
+        font-size: 0.95rem;
+    }
+
+    .fu-value {
+        font-family: var(--font-display);
+        font-size: 1.5rem;
+        line-height: 1;
+        font-variant-numeric: tabular-nums;
+    }
+
+    /* Une carte de yaku. */
+    .yaku-card {
+        padding: 0.75rem 0.9rem;
+        border-radius: 0.6rem;
+        background: var(--paper-sunk);
+        box-shadow: inset 0 0 0 1px var(--paper-line);
+    }
+}
+
+
+/* ---------- 9. Accueil ---------- */
+@layer components {
+    /* Le rouleau des cinq étapes : un filet d'encre entre chaque étape. */
+    .scroll-steps > li + li {
+        border-top: 1px solid var(--paper-line);
+    }
+
+    @media (min-width: 640px) {
+        .scroll-steps > li + li {
+            border-top: 0;
+            border-left: 1px solid var(--paper-line);
+        }
+    }
+
+    /* Le tanzaku, suspendu par sa ficelle, qui se balance un peu au survol. */
+    .tanzaku {
+        position: relative;
+        transform-origin: 50% 0;
+        rotate: -1.5deg;
+        transition: rotate 0.5s var(--ease-snap);
+    }
+
+    .tanzaku:hover,
+    .tanzaku:focus-visible {
+        rotate: 1deg;
+    }
+
+    .tanzaku__string {
+        display: block;
+        width: 2px;
+        height: 1.6rem;
+        margin: 0 auto;
+        background: color-mix(in srgb, var(--shu-500) 75%, var(--ink));
+        border-radius: 1px;
+    }
+
+    .tanzaku__paper {
+        position: relative;
+        min-height: 21rem;
+        border-top: 4px solid var(--shu-500);
+    }
+
+    .tanzaku__paper::before {
+        content: '';
+        position: absolute;
+        top: 0.55rem;
+        left: 50%;
+        width: 0.5rem;
+        height: 0.5rem;
+        translate: -50% 0;
+        border-radius: 50%;
+        background: var(--room);
+        box-shadow: inset 0 1px 2px rgb(0 0 0 / 0.25);
+    }
+
+    .hero-rack {
+        gap: 2px;
+    }
+
+    .hero-slot {
+        position: relative;
+        display: inline-block;
+        margin-left: calc(var(--tile) * 0.45);
+        width: var(--tile);
+        aspect-ratio: 34 / 46;
+    }
+
+    .hero-slot__ghost {
+        position: absolute;
+        inset: 0 0 calc(var(--tile) * 0.14);
+        border: 2px dashed rgb(243 205 122 / 0.6);
+        border-radius: calc(var(--tile) * 0.15);
+        animation: ghost-out 0.25s 1.15s both;
+    }
+
+    .hero-win {
+        position: absolute !important;
+        left: 0;
+        bottom: 0;
+        animation: draw-tile 0.75s 0.55s var(--ease-snap) both;
+    }
+
+    .hero-slip {
+        animation: slip-in 0.5s 1.35s ease-out both;
+    }
+
+    @keyframes draw-tile {
+        from {
+            opacity: 0;
+            translate: 30% -140%;
+            rotate: 9deg;
+        }
+        55% {
+            opacity: 1;
+        }
+        to {
+            translate: 0 0;
+            rotate: 0deg;
+        }
+    }
+
+    @keyframes ghost-out {
+        to {
+            opacity: 0;
+        }
+    }
+
+    @keyframes slip-in {
+        from {
+            opacity: 0;
+            translate: 0 8px;
+        }
+    }
+}
+
+/* ---------- 10. Décor : l'estampe de la saison ---------- */
+@layer components {
+    .scenery {
+        position: fixed;
+        inset: 0;
+        z-index: 0;
+        overflow: hidden;
+        pointer-events: none;
+        opacity: var(--decor-op);
+    }
+
+    .scenery svg {
+        position: absolute;
+        display: block;
+    }
+
+    /* Soleil (ou lune) et brumes dorées, en haut à droite. */
+    .sc-sky {
+        top: 4.25rem;
+        right: -3rem;
+        width: min(30rem, 50vw);
+        height: auto;
+    }
+
+    .sc-orb {
+        fill: var(--orb);
+        opacity: 0.85;
+    }
+
+    .sc-mist rect {
+        fill: var(--mist);
+        opacity: var(--mist-op);
+    }
+
+    .sc-flecks rect {
+        fill: url(#sc-kirihaku);
+    }
+
+    .sc-flecks {
+        fill: #f6dc8c;
+        opacity: calc(var(--mist-op) * 2);
+    }
+
+    #sc-kirihaku rect {
+        fill: #e9c463;
+    }
+
+    /* La bambouseraie, à gauche, sur toute la hauteur. */
+    .sc-bamboo {
+        left: -2.5rem;
+        bottom: 0;
+        height: 100vh;
+        width: auto;
+        max-width: 34vw;
+    }
+
+    .sc-bamboo g,
+    .sc-bamboo path,
+    .sc-bamboo rect {
+        fill: var(--bamboo);
+    }
+
+    .sc-bamboo .twig {
+        fill: none !important;
+        stroke: var(--bamboo);
+    }
+
+    .sc-bamboo .b1 {
+        opacity: 0.34;
+    }
+
+    .sc-bamboo .b2 {
+        opacity: 0.19;
+    }
+
+    .sc-bamboo .b3 {
+        opacity: 0.1;
+    }
+
+    .sc-snow ellipse {
+        fill: var(--snow);
+        stroke: rgb(90 110 120 / 0.25);
+        stroke-width: 0.6;
+    }
+
+    .sc-snow .s3 {
+        opacity: 0.45;
+    }
+
+    .sc-snow .s2 {
+        opacity: 0.7;
+    }
+
+    /* Les moineaux. */
+    .sparrow .sp-body,
+    .sparrow .sp-tail,
+    .sc-bamboo .sparrow .sp-body,
+    .sc-bamboo .sparrow .sp-tail {
+        fill: var(--sparrow);
+    }
+
+    .sparrow .sp-wing,
+    .sc-bamboo .sparrow .sp-wing {
+        fill: color-mix(in srgb, var(--sparrow) 70%, #000);
+    }
+
+    .sparrow .sp-cap,
+    .sc-bamboo .sparrow .sp-cap {
+        fill: color-mix(in srgb, var(--sparrow) 82%, #000);
+    }
+
+    .sparrow .sp-belly,
+    .sparrow .sp-cheek,
+    .sc-bamboo .sparrow .sp-belly,
+    .sc-bamboo .sparrow .sp-cheek {
+        fill: var(--cheek);
+    }
+
+    .sparrow .sp-ink,
+    .sc-bamboo .sparrow .sp-ink {
+        fill: var(--sumi-900);
+    }
+
+    .sparrow .sp-line {
+        fill: none;
+        stroke: var(--cheek);
+        stroke-width: 1.6;
+        stroke-linecap: round;
+        opacity: 0.7;
+    }
+
+    .sparrow .sp-leg {
+        fill: none;
+        stroke: var(--sumi-700);
+        stroke-width: 2;
+        stroke-linecap: round;
+    }
+
+    .sc-bamboo .sparrow {
+        opacity: 0.92;
+    }
+
+    .sc-bamboo .sparrow .sp-line,
+    .sc-bamboo .sparrow .sp-leg {
+        fill: none;
+    }
+
+    /* Collines au lavis, en bas. */
+    .sc-hills {
+        left: 0;
+        right: 0;
+        bottom: 0;
+        width: 100%;
+        height: 24vh;
+        color: var(--hill);
+    }
+
+    .sc-hills .h1 {
+        opacity: var(--hill-op);
+    }
+
+    .sc-hills .h2 {
+        opacity: calc(var(--hill-op) * 0.6);
+    }
+
+    /* La branche de saison, devant le soleil. */
+    .sc-branch {
+        top: 3.25rem;
+        right: 0;
+        width: min(32rem, 52vw);
+        height: auto;
+    }
+
+    .sc-wood path {
+        stroke: var(--branch);
+        opacity: 0.85;
+    }
+
+    .sc-blossom {
+        fill: var(--blossom);
+    }
+
+    .sc-blossom-heart {
+        fill: var(--blossom-deep);
+    }
+
+    .sc-leaf-1 {
+        fill: var(--leaf-1);
+    }
+
+    .sc-leaf-2 {
+        fill: var(--leaf-2);
+    }
+
+    .sc-leaf-3 {
+        fill: var(--leaf-3);
+    }
+
+    .sc-stem {
+        stroke: var(--branch);
+    }
+
+    /* Ce qui tombe ou vole sur toute la fenêtre. */
+    .sc-fall {
+        inset: 0;
+        width: 100%;
+        height: 100%;
+    }
+
+    .sc-fall .sc-blossom {
+        opacity: 0.75;
+    }
+
+    .sc-fall [class*='sc-leaf-'] {
+        opacity: 0.7;
+    }
+
+    .sc-drift {
+        animation: drift 9s ease-in-out infinite alternate;
+        transform-box: fill-box;
+        transform-origin: center;
+    }
+
+    .sc-drift:nth-child(3n) {
+        animation-duration: 12s;
+        animation-delay: -4s;
+    }
+
+    .sc-drift:nth-child(3n + 1) {
+        animation-duration: 10.5s;
+        animation-delay: -7s;
+    }
+
+    @keyframes drift {
+        to {
+            translate: -14px 18px;
+            rotate: 24deg;
+        }
+    }
+
+    .sc-flake {
+        fill: var(--snow);
+        stroke: rgb(90 110 120 / 0.3);
+        stroke-width: 0.5;
+    }
+
+    /* Été : une libellule rouge le jour, des lucioles la nuit. */
+    .sc-dragonfly {
+        top: 38vh;
+        right: 9vw;
+        width: 4.5rem;
+        height: auto;
+        opacity: 0.85;
+        rotate: -8deg;
+    }
+
+    .sc-wing {
+        fill: rgb(255 255 255 / 0.45);
+        stroke: var(--sumi-500);
+        stroke-width: 0.6;
+    }
+
+    .sc-dragonfly-body {
+        stroke: var(--shu-500);
+    }
+
+    .sc-dragonfly-head {
+        fill: var(--shu-600);
+    }
+
+    .scenery .sc-fireflies {
+        display: none;
+    }
+
+    .sc-grass {
+        right: -0.5rem;
+        bottom: 0;
+        height: min(46vh, 26rem);
+        width: auto;
+    }
+
+    .sc-blades path {
+        stroke: color-mix(in srgb, var(--grass) 70%, var(--sumi-900));
+        opacity: 0.55;
+    }
+
+    .sc-plumes-soft path {
+        stroke: var(--grass);
+        opacity: 0.28;
+    }
+
+    .sc-plumes path {
+        stroke: var(--grass);
+        opacity: 0.75;
+    }
+
+    @media (prefers-color-scheme: dark) {
+        :root:not([data-theme='light']) .scenery .sc-fireflies {
+            display: block;
+        }
+
+        :root:not([data-theme='light']) .scenery .sc-dragonfly {
+            display: none;
+        }
+
+        :root:not([data-theme='light']) .sc-orb {
+            opacity: 1;
+        }
+
+        :root:not([data-theme='light']) .sc-glow {
+            animation: firefly 3.2s ease-in-out infinite alternate;
+            animation-delay: calc(var(--i) * -0.7s);
+        }
+    }
+
+    @keyframes firefly {
+        from {
+            opacity: 0.15;
+        }
+        to {
+            opacity: 1;
+        }
+    }
+
+    /* Sur petit écran, le décor s'efface pour laisser la place au contenu. */
+    @media (max-width: 640px) {
+        .sc-bamboo {
+            max-width: 52vw;
+            opacity: 0.7;
+        }
+
+        .sc-sky {
+            opacity: 0.45;
+        }
+
+        .scenery .sc-branch,
+        .scenery .sc-grass {
+            display: none;
+        }
+
+        .sc-fall {
+            opacity: 0.55;
+        }
+
+        .scenery .sc-dragonfly {
+            display: none;
+        }
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+        animation-duration: 0.01ms !important;
+        animation-delay: 0s !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+        scroll-behavior: auto !important;
+    }
+}

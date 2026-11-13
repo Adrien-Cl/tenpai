@@ -1,0 +1,72 @@
+{{-- Étape 4 : les fu, ligne par ligne. Survoler une ligne éclaire son groupe sur le tapis. --}}
+@php
+    $evaluation = $hand->evaluation;
+    $reading = $evaluation->reading();
+    $h = $hand->hand();
+    $fields = $result['fields'] ?? [];
+    $tiles = $reading->chiitoitsu ? [] : $hand->fuTiles();
+@endphp
+
+@if ($reading->chiitoitsu)
+    <x-answer-row id="f-fu-final" model="answers.fu.final" title="Fu de la main" sub="sept paires" :field="$fields['final'] ?? null" />
+@else
+    <div>
+        @foreach ($reading->fu->parts as $part)
+            @if ($part->key === 'base')
+                <x-answer-row wire:key="fu-base" id="f-fu-base" model="answers.fu.base" title="Base" sub="fuutei" :field="$fields['base'] ?? null" />
+            @elseif ($part->key === 'win')
+                <x-answer-row wire:key="fu-win" id="f-fu-win" model="answers.fu.win" :title="'Victoire par '.($h->tsumo ? 'tsumo' : 'ron')" :sub="$evaluation->menzen ? 'main fermée' : 'main ouverte'" :field="$fields['win'] ?? null" />
+            @elseif (str_starts_with($part->key, 'g') || $part->key === 'pair')
+                @php
+                    $sub = $part->key === 'pair' ? 'paire' : ($part->group?->meld?->label() ?? 'dans la main');
+                @endphp
+                <x-answer-row wire:key="fu-{{ $part->key }}" :id="'f-fu-'.$part->key" :model="'answers.fu.'.$part->key" :sub="$sub" :field="$fields[$part->key] ?? null"
+                              x-on:mouseenter="lit = '{{ $part->key }}'" x-on:mouseleave="lit = null" x-on:focusin="lit = '{{ $part->key }}'" x-on:focusout="lit = null"
+                              class="-mx-2 rounded-lg px-2 transition-colors hover:bg-paper-sunk">
+                    <span class="mini tiles">
+                        @foreach ($tiles[$part->key] ?? [] as $t)
+                            <x-tile :tile="$t['tile']" :red="$t['red']" :back="$t['back']" :class="$t['win'] ? 'tile--mark' : ''" />
+                        @endforeach
+                    </span>
+                    <span class="sr-only">{{ implode(', ', array_map(fn ($t) => \App\Domain\Mahjong\Tile::name($t['tile'], $t['red']), $tiles[$part->key] ?? [])) }}</span>
+                </x-answer-row>
+            @elseif ($part->key === 'wait')
+                @php
+                    $chosen = $answers['fu']['waittype'] ?? null;
+                    $waitField = $fields['waittype'] ?? null;
+                @endphp
+                <fieldset wire:key="fu-waittype" class="border-t border-paper-line py-3">
+                    <legend class="float-left mb-2 w-full font-bold">Type d’attente <span class="font-normal text-ink-muted">sur {{ \App\Domain\Mahjong\Tile::name($h->win) }}</span>
+                        @if ($waitField && $waitField['state'] === 'ok')<span class="ml-2 text-lg text-ok" aria-hidden="true">◎</span><span class="sr-only">Juste</span>@endif
+                        @if ($waitField && $waitField['state'] === 'ko')<span class="ml-2 text-sm text-ko">→ {{ $waitField['expected'] }}</span>@endif
+                    </legend>
+                    <div class="clear-both flex flex-wrap gap-2">
+                        @foreach (\App\Domain\Mahjong\Wait::cases() as $wait)
+                            <label @class([
+                                'choice',
+                                'is-right' => $waitField && $wait === $reading->wait,
+                                'is-wrong' => $waitField && $waitField['state'] === 'ko' && $chosen === $wait->value,
+                            ])>
+                                <input type="radio" class="sr-only" name="waittype" value="{{ $wait->value }}" wire:model="answers.fu.waittype" @disabled($waitField !== null)>
+                                {{ $wait->label() }}<small>{{ $wait->gloss() }}</small>
+                            </label>
+                        @endforeach
+                    </div>
+                </fieldset>
+                <x-answer-row wire:key="fu-wait" id="f-fu-wait" model="answers.fu.wait" title="Fu d’attente" :field="$fields['wait'] ?? null" />
+            @endif
+        @endforeach
+
+        <x-answer-row wire:key="fu-raw" id="f-fu-raw" model="answers.fu.raw" title="Total avant arrondi" :field="$fields['raw'] ?? null" class="mt-2 border-t-2! border-ink/70!" />
+        <x-answer-row wire:key="fu-final" id="f-fu-final" model="answers.fu.final" title="Fu de la main" sub="après arrondi" :field="$fields['final'] ?? null" />
+    </div>
+@endif
+
+@if ($result)
+    <p class="mt-4 font-bold">
+        {{ $evaluation->fu() }} fu.
+        @if ($evaluation->payment()->limit)
+            <span class="font-normal text-ink-muted">Au-delà du mangan, les fu ne changent plus les points, mais on les compte quand même.</span>
+        @endif
+    </p>
+@endif

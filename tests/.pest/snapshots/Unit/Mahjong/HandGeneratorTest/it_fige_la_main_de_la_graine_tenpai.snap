@@ -1,0 +1,51 @@
+{
+    "seed": "tenpai",
+    "theme": "sanshoku",
+    "closed": [
+        4,
+        5,
+        6,
+        13,
+        14,
+        15,
+        22,
+        23,
+        24,
+        26,
+        26
+    ],
+    "melds": [
+        "chi:18"
+    ],
+    "win": 6,
+    "tsumo": true,
+    "seat": 3,
+    "round": 1,
+    "riichi": false,
+    "doubleRiichi": false,
+    "ippatsu": false,
+    "haitei": false,
+    "rinshan": false,
+    "chankan": false,
+    "dora": [
+        24
+    ],
+    "ura": [],
+    "aka": 2,
+    "handTiles": [
+        "4r",
+        "5",
+        "13",
+        "14",
+        "15",
+        "22r",
+        "23",
+        "24",
+        "26",
+        "26"
+    ],
+    "winTile": "6",
+    "meldViews": [
+        "chi:18@2"
+    ]
+}
