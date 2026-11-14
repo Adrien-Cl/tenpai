@@ -53,78 +53,104 @@
 
     <a href="#contenu" class="sr-only focus:not-sr-only focus:fixed focus:top-3 focus:left-3 focus:z-50 focus:rounded-lg focus:bg-paper focus:px-4 focus:py-2 focus:text-ink">{{ __('Aller au contenu') }}</a>
 
-    <header class="relative z-10 mx-auto flex w-full max-w-6xl items-center gap-x-2 gap-y-2 px-4 pt-4 pb-3 sm:gap-x-6 sm:px-6 sm:pt-6">
+    {{--
+        En-tête : sur grand écran, une rangée (liens, puis réglages, fond, langue).
+        Sous md, la rangée ne tient pas : un bouton menu ouvre les mêmes éléments en panneau.
+    --}}
+    @php($customRules = ! \App\Support\TableRules::isDefault($tableRules))
+    @php($utilityClass = 'relative flex min-h-11 w-full shrink-0 items-center gap-3 rounded-lg px-3 text-ink-muted transition-colors hover:bg-paper-sunk hover:text-ink md:size-10 md:min-h-0 md:justify-center md:px-0')
+    <header x-data="{ menuOpen: false }" x-on:keydown.escape.window="menuOpen = false" x-on:click.outside="menuOpen = false"
+            class="relative z-20 mx-auto flex w-full max-w-6xl items-center gap-x-6 px-4 pt-[max(1rem,env(safe-area-inset-top))] pb-3 sm:px-6 sm:pt-6">
         <a href="{{ localized_route('home') }}" class="group flex items-center gap-3 rounded-lg" aria-label="{{ __('Tenpai, accueil') }}">
             <x-seal class="size-10 transition-transform group-hover:-rotate-3 sm:size-11" />
-            <span class="display hidden text-xl tracking-wide text-ink min-[400px]:inline sm:text-2xl">Tenpai</span>
+            <span class="display text-xl tracking-wide text-ink sm:text-2xl">Tenpai</span>
         </a>
 
-        <nav class="ml-auto flex items-center gap-1 text-sm sm:gap-2 sm:text-base" aria-label="{{ __('Navigation principale') }}">
-            @foreach ([
-                ['training', __('S’entraîner'), null, ['training*', 'drill*']],
-                ['daily', __('Défi du jour'), __('Défi'), 'daily'],
-                ['scoring', __('Barème'), null, 'scoring'],
-            ] as [$route, $label, $shortLabel, $pattern])
-                <a href="{{ localized_route($route) }}"
-                   @class([
-                       'relative whitespace-nowrap rounded-lg px-2 py-2 font-medium transition-colors sm:px-3',
-                       'text-ink after:absolute after:inset-x-3 after:bottom-0.5 after:h-[3px] after:rounded-full after:bg-shu' => $isCurrent($pattern),
-                       'text-ink-muted hover:text-ink' => ! $isCurrent($pattern),
-                   ])
-                   @if ($isCurrent($pattern)) aria-current="page" @endif
-                   @if ($route === 'training') wire:navigate @endif>
-                    @if ($shortLabel)
-                        <span class="sm:hidden">{{ $shortLabel }}</span><span class="hidden sm:inline">{{ $label }}</span>
-                    @else
-                        {{ $label }}
+        <button type="button" x-on:click="menuOpen = !menuOpen" x-bind:aria-expanded="menuOpen" aria-controls="site-menu"
+                x-bind:aria-label="menuOpen ? @js(__('Fermer le menu')) : @js(__('Ouvrir le menu'))" aria-label="{{ __('Ouvrir le menu') }}"
+                class="relative ml-auto grid size-11 shrink-0 place-items-center rounded-lg text-ink transition-colors hover:bg-paper-sunk md:hidden">
+            <svg x-show="!menuOpen" class="size-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true">
+                <path d="M4 7h16M4 12h16M4 17h16"/>
+            </svg>
+            <svg x-cloak x-show="menuOpen" class="size-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true">
+                <path d="M6 6l12 12M18 6 6 18"/>
+            </svg>
+            @if ($customRules)
+                <span class="absolute top-2 right-2 size-2 rounded-full bg-shu" aria-hidden="true"></span>
+            @endif
+        </button>
+
+        <div id="site-menu" x-bind:class="{ 'max-md:flex!': menuOpen }"
+             class="paper absolute inset-x-4 top-full z-40 hidden flex-col gap-1 p-2.5 md:static md:ml-auto md:flex md:flex-row md:items-center md:gap-6 md:bg-transparent md:p-0 md:shadow-none">
+            <nav class="flex flex-col gap-0.5 md:flex-row md:items-center md:gap-2" aria-label="{{ __('Navigation principale') }}">
+                @foreach ([
+                    ['training', __('S’entraîner'), ['training*', 'drill*']],
+                    ['daily', __('Défi du jour'), 'daily'],
+                    ['scoring', __('Barème'), 'scoring'],
+                ] as [$route, $label, $pattern])
+                    <a href="{{ localized_route($route) }}" x-on:click="menuOpen = false"
+                       @class([
+                           'relative flex min-h-11 items-center whitespace-nowrap rounded-lg px-3 font-medium transition-colors md:min-h-0 md:py-2',
+                           'text-ink max-md:bg-paper-sunk after:absolute after:bottom-0.5 after:h-[3px] after:rounded-full after:bg-shu max-md:after:inset-y-2.5 max-md:after:left-0 max-md:after:h-auto max-md:after:w-[3px] md:after:inset-x-3' => $isCurrent($pattern),
+                           'text-ink-muted hover:text-ink' => ! $isCurrent($pattern),
+                       ])
+                       @if ($isCurrent($pattern)) aria-current="page" @endif
+                       @if ($route === 'training') wire:navigate @endif>{{ $label }}</a>
+                @endforeach
+            </nav>
+
+            <div class="flex flex-col gap-0.5 border-t border-paper-line pt-1.5 md:flex-row md:items-center md:gap-6 md:border-0 md:pt-0">
+                {{-- Réglages : les règles de la table. Un point rouge quand elles diffèrent des règles par défaut. --}}
+                <button type="button" x-on:click="menuOpen = false; $dispatch('open-rules')" class="{{ $utilityClass }}"
+                        aria-label="{{ __('Règles de la table') }}" title="{{ __('Règles de la table') }}" aria-haspopup="dialog">
+                    <svg class="size-5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true">
+                        <path d="M4 7h9M17 7h3M4 17h3M11 17h9"/>
+                        <circle cx="15" cy="7" r="2"/>
+                        <circle cx="9" cy="17" r="2"/>
+                    </svg>
+                    <span class="md:hidden" aria-hidden="true">{{ __('Règles de la table') }}</span>
+                    @if ($customRules)
+                        <span class="size-2 rounded-full bg-shu md:absolute md:top-1.5 md:right-1.5" aria-hidden="true"></span>
+                        <span class="sr-only">{{ __('(règles personnalisées)') }}</span>
                     @endif
-                </a>
-            @endforeach
-        </nav>
+                </button>
 
-        {{-- Réglages : les règles de la table. Un point rouge quand elles diffèrent des règles par défaut. --}}
-        <button type="button" x-data x-on:click="$dispatch('open-rules')"
-                class="relative -ml-1 grid size-9 shrink-0 place-items-center rounded-lg text-ink-muted transition-colors hover:bg-paper-sunk hover:text-ink sm:ml-0 sm:size-10"
-                aria-label="{{ __('Règles de la table') }}" title="{{ __('Règles de la table') }}" aria-haspopup="dialog">
-            <svg class="size-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true">
-                <path d="M4 7h9M17 7h3M4 17h3M11 17h9"/>
-                <circle cx="15" cy="7" r="2"/>
-                <circle cx="9" cy="17" r="2"/>
-            </svg>
-            @unless (\App\Support\TableRules::isDefault($tableRules))
-                <span class="absolute top-1.5 right-1.5 size-2 rounded-full bg-shu" aria-hidden="true"></span>
-                <span class="sr-only">{{ __('(règles personnalisées)') }}</span>
-            @endunless
-        </button>
+                {{-- Fond : la lune pour passer à la nuit, le soleil pour revenir au jour. --}}
+                <button type="button" x-data="backdropToggle(@js(\App\View\Backdrop::themeColors()))"
+                        x-on:click="toggle" x-bind:aria-pressed="dark" class="{{ $utilityClass }}"
+                        aria-label="{{ __('Fond foncé') }}" title="{{ __('Fond foncé') }}">
+                    <svg class="size-5 shrink-0 dark:hidden" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                        <path d="M20 14.5A8 8 0 0 1 9.5 4a8 8 0 1 0 10.5 10.5Z"/>
+                    </svg>
+                    <svg class="hidden size-5 shrink-0 dark:block" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true">
+                        <circle cx="12" cy="12" r="4"/>
+                        <path d="M12 2.5v2M12 19.5v2M2.5 12h2M19.5 12h2M5.3 5.3l1.4 1.4M17.3 17.3l1.4 1.4M5.3 18.7l1.4-1.4M17.3 6.7l1.4-1.4"/>
+                    </svg>
+                    <span class="md:hidden" aria-hidden="true">{{ __('Fond foncé') }}</span>
+                    <span class="ml-auto h-5 w-9 rounded-full p-0.5 transition-colors md:hidden" x-bind:class="dark ? 'bg-ink' : 'bg-paper-line'" aria-hidden="true">
+                        <span class="block size-4 rounded-full bg-paper shadow transition-transform" x-bind:class="dark && 'translate-x-4'"></span>
+                    </span>
+                </button>
 
-        {{-- Fond : la lune pour passer à la nuit, le soleil pour revenir au jour. --}}
-        <button type="button" x-data="backdropToggle(@js(\App\View\Backdrop::themeColors()))"
-                x-on:click="toggle" x-bind:aria-pressed="dark"
-                class="-ml-1 grid size-9 shrink-0 place-items-center rounded-lg text-ink-muted transition-colors hover:bg-paper-sunk hover:text-ink sm:ml-0 sm:size-10"
-                aria-label="{{ __('Fond foncé') }}" title="{{ __('Fond foncé') }}">
-            <svg class="size-5 dark:hidden" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                <path d="M20 14.5A8 8 0 0 1 9.5 4a8 8 0 1 0 10.5 10.5Z"/>
-            </svg>
-            <svg class="hidden size-5 dark:block" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true">
-                <circle cx="12" cy="12" r="4"/>
-                <path d="M12 2.5v2M12 19.5v2M2.5 12h2M19.5 12h2M5.3 5.3l1.4 1.4M17.3 17.3l1.4 1.4M5.3 18.7l1.4-1.4M17.3 6.7l1.4-1.4"/>
-            </svg>
-        </button>
-
-        {{-- Langue : le code de l'autre langue, qui mène à la même page traduite. --}}
-        @foreach ($alternates as $alternateLocale => $alternateUrl)
-            @continue($alternateLocale === $locale)
-            <a href="{{ $alternateUrl }}" hreflang="{{ $alternateLocale }}" lang="{{ $alternateLocale }}"
-               class="-ml-1 grid h-9 min-w-9 shrink-0 place-items-center rounded-lg px-1.5 text-sm font-bold tracking-wide text-ink-muted transition-colors hover:bg-paper-sunk hover:text-ink sm:ml-0 sm:h-10 sm:min-w-10"
-               aria-label="{{ \App\Support\Locale::LOCALES[$alternateLocale]['name'] }}" title="{{ \App\Support\Locale::LOCALES[$alternateLocale]['name'] }}">{{ strtoupper($alternateLocale) }}</a>
-        @endforeach
+                {{-- Langue : le code de l'autre langue (le nom en entier dans le menu), qui mène à la même page traduite. --}}
+                @foreach ($alternates as $alternateLocale => $alternateUrl)
+                    @continue($alternateLocale === $locale)
+                    @php($localeName = \App\Support\Locale::LOCALES[$alternateLocale]['name'])
+                    <a href="{{ $alternateUrl }}" hreflang="{{ $alternateLocale }}" lang="{{ $alternateLocale }}"
+                       class="{{ $utilityClass }} md:min-w-10 md:px-1.5" aria-label="{{ $localeName }}" title="{{ $localeName }}">
+                        <span class="grid w-5 shrink-0 place-items-center text-sm font-bold tracking-wide md:w-auto">{{ strtoupper($alternateLocale) }}</span>
+                        <span class="md:hidden" aria-hidden="true">{{ $localeName }}</span>
+                    </a>
+                @endforeach
+            </div>
+        </div>
     </header>
 
     <main id="contenu" class="relative z-10 w-full flex-1">
         {{ $slot }}
     </main>
 
-    <footer class="relative z-10 mx-auto mt-20 w-full max-w-6xl px-4 pb-8 text-sm text-ink-muted sm:px-6">
+    <footer class="relative z-10 mx-auto mt-20 w-full max-w-6xl px-4 pb-[max(2rem,env(safe-area-inset-bottom))] text-sm text-ink-muted sm:px-6">
         <div class="kasumi -mb-2" aria-hidden="true">
             <span style="left: 0; right: 38%; top: 0.4rem"></span>
             <span style="left: 22%; right: 6%; top: 1.4rem"></span>

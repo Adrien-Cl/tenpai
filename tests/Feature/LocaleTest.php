@@ -19,11 +19,11 @@ it('relie chaque page à sa traduction (hreflang et lien de langue)', function (
         ->assertSee('<link rel="alternate" hreflang="en" href="'.url('/en/training/tenpai').'">', false)
         ->assertSee('<link rel="alternate" hreflang="x-default" href="'.url('/entrainement/tenpai').'">', false)
         ->assertSee('hreflang="en" lang="en"', false)
-        ->assertSeeInOrder(['<header', 'aria-label="English"', '>EN</a>', '</header>'], false);
+        ->assertSeeInOrder(['<header', 'aria-label="English"', '>EN</span>', '</header>'], false);
 
     $this->get('/en/scoring')
         ->assertSee('href="'.url('/bareme').'" hreflang="fr" lang="fr"', false)
-        ->assertSeeInOrder(['<header', 'aria-label="Français"', '>FR</a>', '</header>'], false);
+        ->assertSeeInOrder(['<header', 'aria-label="Français"', '>FR</span>', '</header>'], false);
 });
 
 it('garde la langue en tirant une main', function (string $from, string $pattern) {

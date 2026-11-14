@@ -1,4 +1,4 @@
-{{-- Le tapis : vents, situation, main, appels et mur mort. --}}
+{{-- Le tapis : vents, situation, main, appels et mur mort. Il compte comme caché dès qu'il passe sous la barre de la main (160 px). --}}
 @php
     $h = $hand->hand();
     $g = $hand->generated;
@@ -17,8 +17,8 @@
     if ($h->haitei) $tags[] = $h->tsumo ? __('Dernière tuile du mur') : __('Dernière défausse de la partie');
     if ($h->rinshan) $tags[] = __('Tuile piochée après le kan');
 @endphp
-<section class="felt px-3 pt-5 pb-6 sm:px-8 sm:pt-7 sm:pb-8" aria-label="{{ __('Main gagnante') }}" x-intersect:enter="tableVisible = true" x-intersect:leave="tableVisible = false">
-    <div class="flex flex-wrap items-start gap-x-6 gap-y-4">
+<section class="felt px-3 pt-5 pb-6 sm:px-8 sm:pt-7 sm:pb-8" aria-label="{{ __('Main gagnante') }}" x-intersect:enter.margin.-160px.0px.0px.0px="tableVisible = true" x-intersect:leave.margin.-160px.0px.0px.0px="tableVisible = false">
+    <div class="flex flex-wrap items-start gap-x-6 gap-y-3 sm:gap-y-4">
         {{-- Vents de la manche et du siège. --}}
         <div class="flex items-center gap-4" role="group" aria-label="{{ __('Vents') }}">
             <div class="flex items-center gap-2.5">
@@ -31,7 +31,7 @@
             </div>
         </div>
 
-        <div class="flex flex-wrap items-center gap-2 sm:ml-auto">
+        <div class="flex w-full flex-wrap items-center gap-2 sm:ml-auto sm:w-auto">
             <span class="display rounded-lg bg-felt-deep/60 px-3 py-1.5 text-lg text-gilt">{{ $h->tsumo ? 'Tsumo' : 'Ron' }}</span>
             @if ($h->riichi)
                 <span class="flex items-center gap-2 rounded-lg bg-felt-deep/60 px-3 py-2 text-sm font-bold text-felt-ink">
@@ -42,7 +42,7 @@
             @foreach ($tags as $tag)
                 <span class="rounded-lg bg-felt-deep/60 px-3 py-2 text-sm text-felt-ink">{{ $tag }}</span>
             @endforeach
-            <button type="button" class="rounded-lg px-3 py-2 text-sm text-felt-muted hover:bg-felt-raised hover:text-felt-ink" x-on:click="share()">
+            <button type="button" class="ml-auto rounded-lg px-3 py-2 text-sm text-felt-muted hover:bg-felt-raised hover:text-felt-ink sm:ml-0" x-on:click="share()">
                 <span x-show="!copied">{{ __('Partager cette main') }}</span>
                 <span x-cloak x-show="copied" class="text-gilt">{{ __('Lien copié') }}</span>
             </button>
@@ -50,7 +50,7 @@
     </div>
 
     {{-- La main : tuiles cachées, tuile gagnante à part, appels à droite. --}}
-    <div class="mt-8 flex flex-wrap items-end gap-x-[calc(var(--tile)*0.55)] gap-y-6 sm:mt-10" style="--tile: clamp(1.4rem, calc((100vw - 3.5rem) / 14.6), 3.15rem)">
+    <div class="mt-6 flex flex-wrap items-end gap-x-[calc(var(--tile)*0.55)] gap-y-5 [--tile:clamp(1.15rem,calc((100vw-5.5rem)/15.2),3.15rem)] sm:mt-10 sm:gap-y-6 sm:[--tile:clamp(1.15rem,calc((100vw-8.5rem)/15.6),3.15rem)]">
         <span class="tiles gap-[1px]" aria-label="{{ __('Tuiles en main') }}">
             @foreach ($g->handTiles as $i => $t)
                 @php($key = $groups['hand'][$i] ?? null)
@@ -85,7 +85,7 @@
     </div>
 
     {{-- Mur mort : indicateurs de dora (et d'ura-dora après un riichi). --}}
-    <div class="mt-8 flex flex-wrap items-end gap-x-8 gap-y-4 border-t border-felt-line pt-5" style="--tile: clamp(1.15rem, 3.4vw, 1.85rem)">
+    <div class="mt-6 flex flex-wrap items-end gap-x-8 gap-y-4 border-t border-felt-line pt-4 sm:mt-8 sm:pt-5" style="--tile: clamp(1.15rem, 3.4vw, 1.85rem)">
         @foreach (array_filter(['Dora' => $h->dora, 'Ura' => $h->riichi ? $h->ura : null], fn ($v) => $v !== null) as $label => $indicators)
             <div class="flex items-end gap-3">
                 <span class="pb-1 text-sm text-felt-muted">{{ $label }}</span>

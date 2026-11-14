@@ -28,7 +28,7 @@
     };
 @endphp
 
-<section class="paper relative overflow-hidden" aria-labelledby="recap-title">
+<section class="paper relative overflow-hidden" aria-labelledby="recap-title" wire:key="recap" x-init="$el.getBoundingClientRect().top < 0 && $el.scrollIntoView({ block: 'start', behavior: 'smooth' })">
     <header class="flex gap-5 px-5 pt-6 sm:px-8 sm:pt-8">
         <span class="step-tile hidden h-14 w-11 shrink-0 sm:grid"><x-glyph char="計" class="size-6" /></span>
         <div class="min-w-0 flex-1 pr-24">

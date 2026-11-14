@@ -34,9 +34,10 @@
         </p>
     @else
         {{-- Entraînement ciblé et exercices courts : changer l'un ou l'autre tire une nouvelle main. --}}
-        @php($selectClass = 'h-10 max-w-full rounded-lg bg-paper-sunk px-3 text-ink shadow-[inset_0_0_0_1px_var(--paper-line)] focus:shadow-[inset_0_0_0_2px_var(--ink)] focus:outline-none')
-        <form method="GET" action="{{ localized_route('training') }}" class="mb-5 flex flex-wrap items-center gap-x-3 gap-y-2">
-            <label for="training-drill" class="text-ink-muted">{{ __('Entraînement') }}</label>
+        {{-- Sur téléphone, les deux listes côte à côte ; 16 px au moins, sinon iOS zoome en les ouvrant. --}}
+        @php($selectClass = 'h-10 w-full min-w-0 truncate rounded-lg bg-paper-sunk px-3 text-base text-ink shadow-[inset_0_0_0_1px_var(--paper-line)] focus:shadow-[inset_0_0_0_2px_var(--ink)] focus:outline-none sm:w-auto sm:max-w-full')
+        <form method="GET" action="{{ localized_route('training') }}" class="mb-3 grid grid-cols-2 gap-2 sm:mb-5 sm:flex sm:flex-wrap sm:items-center sm:gap-x-3">
+            <label for="training-drill" class="sr-only text-ink-muted sm:not-sr-only">{{ __('Entraînement') }}</label>
             <select id="training-drill" name="exercice" x-on:change="$el.form.submit()" class="{{ $selectClass }}">
                 <option value="">{{ __('Main complète : les cinq étapes') }}</option>
                 @foreach (\App\Livewire\Training::DRILLS as $key => ['first' => $first, 'label' => $label])
@@ -59,7 +60,7 @@
     @include('livewire.training.table')
     @include('livewire.training.rail')
 
-    <div class="mt-8 grid gap-6 lg:mt-10 lg:grid-cols-[17.5rem_minmax(0,1fr)] lg:gap-8">
+    <div class="mt-4 grid gap-4 sm:mt-8 sm:gap-6 lg:mt-10 lg:grid-cols-[17.5rem_minmax(0,1fr)] lg:gap-8">
         @include('livewire.training.score-sheet')
 
         <div class="min-w-0">

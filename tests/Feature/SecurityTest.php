@@ -24,6 +24,28 @@ it('impose le HTTPS une fois servi en HTTPS', function () {
         ->assertHeader('Strict-Transport-Security', 'max-age=31536000; includeSubDomains');
 });
 
+it('suit le schéma HTTPS annoncé par un reverse proxy de confiance', function () {
+    config(['trustedproxy.proxies' => 'private_ranges']);
+
+    $this->withServerVariables(['REMOTE_ADDR' => '172.18.0.2'])
+        ->withHeaders(['X-Forwarded-Proto' => 'https', 'X-Forwarded-Port' => '443'])
+        ->get('/entrainement/defi-2026-11-14')
+        ->assertOk()
+        ->assertHeader('Strict-Transport-Security')
+        ->assertSee('data-update-uri="https://', false);
+});
+
+it('ignore les en-têtes de proxy d’un appelant qui n’est pas de confiance', function () {
+    config(['trustedproxy.proxies' => 'private_ranges']);
+
+    $this->withServerVariables(['REMOTE_ADDR' => '203.0.113.7'])
+        ->withHeaders(['X-Forwarded-Proto' => 'https'])
+        ->get('/entrainement/defi-2026-11-14')
+        ->assertOk()
+        ->assertHeaderMissing('Strict-Transport-Security')
+        ->assertDontSee('data-update-uri="https://', false);
+});
+
 it('limite le rythme des aperçus', function () {
     for ($i = 0; $i < 30; $i++) {
         $this->get('/apercu/tenpai.png')->assertOk();

@@ -15,6 +15,8 @@ services:
       # Laissée vide, une clé est générée au premier démarrage et gardée dans le volume « data ».
       APP_KEY: ${APP_KEY:-}
       APP_URL: ${APP_URL:-http://localhost:8000}
+      # Le reverse proxy, joint par le réseau Docker, termine le TLS : on croit ses en-têtes X-Forwarded-* (schéma, IP du visiteur).
+      TRUSTED_PROXIES: ${TRUSTED_PROXIES:-private_ranges}
       APP_LOCALE: fr
       APP_FALLBACK_LOCALE: fr
       LOG_CHANNEL: stderr

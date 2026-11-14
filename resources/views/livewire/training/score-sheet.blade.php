@@ -32,16 +32,9 @@
                             @if ($result) {{ $result['summary'] }} @elseif ($i === $step) {{ __('en cours') }} @else &nbsp; @endif
                         </span>
                     </span>
-                    <span class="h-5 text-lg leading-5" aria-hidden="true">
-                        @if ($result['given'] ?? false)
-                            <span class="text-ink-faint">·</span>
-                        @elseif ($result)
-                            <span @class(['text-ok' => $result['ok'], 'text-ko' => ! $result['ok']])>{{ $result['ok'] ? '◎' : '✕' }}</span>
-                        @endif
+                    <span class="h-5 text-lg leading-5">
+                        @include('livewire.training.step-mark', ['result' => $result, 'okClass' => 'text-ok', 'koClass' => 'text-ko', 'givenClass' => 'text-ink-faint'])
                     </span>
-                    @if ($result)
-                        <span class="sr-only">{{ ($result['given'] ?? false) ? __('donnée') : ($result['ok'] ? __('juste') : ($result['revealed'] ? __('réponse affichée') : __('à revoir'))) }}</span>
-                    @endif
                 </button>
             </li>
         @endforeach
