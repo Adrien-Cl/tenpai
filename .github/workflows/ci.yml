@@ -187,6 +187,77 @@ jobs:
           retention-days: 7
           if-no-files-found: ignore
 
+  docker:
+    name: Image Docker (build et démarrage)
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      # Un vrai nom de domaine, comme en production : trustHosts() refuse alors « localhost ».
+      APP_URL: http://tenpai.example:8000
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Construire et démarrer la stack
+        run: docker compose up --detach --build --wait --wait-timeout 120
+
+      - name: Vérifier que l'application répond
+        shell: bash
+        run: |
+          set -euo pipefail
+          base=$APP_URL
+
+          curl() { command curl --resolve tenpai.example:8000:127.0.0.1 "$@"; }
+
+          # Un hôte qui n'est pas celui d'APP_URL doit être refusé.
+          [[ $(command curl -sS -o /dev/null -w '%{http_code}' http://localhost:8000/) != 200 ]] \
+            || { echo "::error::Un hôte inconnu est servi : trustHosts() n'est pas actif"; exit 1; }
+
+          check() {
+            local path=$1 expected_type=$2
+            local result
+            result=$(curl -sS -o /dev/null -w '%{http_code} %{content_type}' "$base$path")
+            echo "$path → $result"
+            [[ $result == "200 $expected_type"* ]] || { echo "::error::$path attendu 200 $expected_type, reçu $result"; exit 1; }
+          }
+
+          check /up text/html
+          check / text/html
+          check /en text/html
+          check /bareme text/html
+          check /entrainement/tenpai text/html
+          check /tuiles.svg image/svg+xml
+          # Sans l'extension GD, l'aperçu redirige vers l'image générale : on exige le PNG dessiné.
+          check /apercu/tenpai.png image/png
+
+          css=$(curl -sS "$base/" | grep -oE '/build/assets/[^"]+\.css' | head -n1)
+          [[ -n $css ]] || { echo "::error::Aucune feuille de style Vite dans la page d'accueil"; exit 1; }
+          check "$css" text/css
+
+          livewire=$(curl -sS "$base/entrainement/tenpai" | grep -oE 'src="[^"]*livewire[^"]*"' | head -n1 | sed -E 's/^src="https?:\/\/[^/]+//; s/"$//')
+          [[ -n $livewire ]] || { echo "::error::Aucun script Livewire dans la page d'entraînement"; exit 1; }
+          check "$livewire" application/javascript
+
+      - name: Vérifier que la clé survit à un redémarrage
+        shell: bash
+        run: |
+          set -euo pipefail
+          before=$(docker compose exec -T app cat /data/app.key)
+          docker compose restart app
+          docker compose up --wait --wait-timeout 60
+          after=$(docker compose exec -T app cat /data/app.key)
+          [[ -n $before && $before == "$after" ]] || { echo "::error::La clé d'application a changé au redémarrage"; exit 1; }
+          curl -fsS -o /dev/null --resolve tenpai.example:8000:127.0.0.1 "$APP_URL/"
+
+      - name: Journaux du conteneur
+        if: always()
+        run: docker compose logs app
+
+      - name: Arrêter la stack
+        if: always()
+        run: docker compose down --volumes
+
   security:
     name: Audit de sécurité
     runs-on: ubuntu-latest

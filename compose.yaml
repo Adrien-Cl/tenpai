@@ -29,7 +29,8 @@ services:
       - data:/data
       - storage:/var/www/html/storage
     healthcheck:
-      test: ["CMD", "curl", "-fsS", "http://localhost/up"]
+      # La requête porte l'hôte d'APP_URL : en production, trustHosts() refuse tout autre hôte, dont « localhost ».
+      test: ["CMD-SHELL", "host=$${APP_URL#*://}; curl -fsS -o /dev/null -H \"Host: $${host%%/*}\" http://127.0.0.1/up"]
       interval: 30s
       timeout: 5s
       retries: 3
