@@ -57,7 +57,6 @@
                 Riichi courant, style salle japonaise : kuitan, cinq rouges, sans honba ni bâton de riichi.
                 Vos progrès restent dans ce navigateur.
             </p>
-            <p class="text-ink-faint">Décor de saison : {{ mb_strtolower($season->kigo()) }}.</p>
         </div>
     </footer>
     @livewireScripts
