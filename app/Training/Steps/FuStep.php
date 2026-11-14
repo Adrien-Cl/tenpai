@@ -26,12 +26,12 @@ final class FuStep implements Step
 
     public function title(): string
     {
-        return 'Les fu, un par un';
+        return __('Les fu, un par un');
     }
 
     public function help(): string
     {
-        return 'Donnez la valeur de chaque élément. Survolez une ligne pour voir son groupe sur le tapis ; la tuile gagnante est soulignée.';
+        return __('Donnez la valeur de chaque élément. Survolez une ligne pour voir son groupe sur le tapis ; la tuile gagnante est soulignée.');
     }
 
     public function scoringTab(): string
@@ -73,7 +73,7 @@ final class FuStep implements Step
         }
 
         $sum = implode(' + ', array_map(fn (FuPart $part): int => $part->fu, $fu->parts));
-        $ok = $result->mark('raw', Answers::int($answers, 'raw') === $fu->raw, (string) $fu->raw, "Somme : {$sum} = {$fu->raw}.") && $ok;
+        $ok = $result->mark('raw', Answers::int($answers, 'raw') === $fu->raw, (string) $fu->raw, __('Somme : :sum = :raw.', ['sum' => $sum, 'raw' => $fu->raw])) && $ok;
         $ok = $result->mark('final', Answers::int($answers, 'final') === $fu->fu, (string) $fu->fu, $fu->finalWhy) && $ok;
 
         if ($reveal) {

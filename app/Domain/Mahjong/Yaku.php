@@ -42,7 +42,7 @@ enum Yaku: string
 
     public function label(): string
     {
-        return match ($this) {
+        return Text::get(match ($this) {
             self::Riichi => 'Riichi',
             self::DoubleRiichi => 'Double riichi',
             self::Ippatsu => 'Ippatsu',
@@ -73,7 +73,7 @@ enum Yaku: string
             self::Shousangen => 'Shousangen',
             self::Honitsu => 'Honitsu',
             self::Chinitsu => 'Chinitsu',
-        };
+        });
     }
 
     /**
@@ -81,12 +81,19 @@ enum Yaku: string
      */
     public function shortLabel(): string
     {
-        return ucfirst(str_replace('Yakuhai : ', '', $this->label()));
+        return match ($this) {
+            self::Haku => 'Haku',
+            self::Hatsu => 'Hatsu',
+            self::Chun => 'Chun',
+            self::SeatWind => Text::get('Vent du siège'),
+            self::RoundWind => Text::get('Vent de la manche'),
+            default => $this->label(),
+        };
     }
 
     public function gloss(): string
     {
-        return match ($this) {
+        return Text::get(match ($this) {
             self::Riichi => 'déclaration',
             self::DoubleRiichi => 'riichi au premier tour',
             self::Ippatsu => 'coup immédiat',
@@ -117,12 +124,12 @@ enum Yaku: string
             self::Shousangen => 'petits trois dragons',
             self::Honitsu => 'semi-pur',
             self::Chinitsu => 'pur',
-        };
+        });
     }
 
     public function description(): string
     {
-        return match ($this) {
+        return Text::get(match ($this) {
             self::Riichi => 'Main fermée et riichi déclaré.',
             self::DoubleRiichi => 'Riichi déclaré dès votre première défausse, sans aucun appel avant. Remplace riichi.',
             self::Ippatsu => 'Victoire avant votre prochaine défausse après le riichi, sans appel entre-temps.',
@@ -153,7 +160,7 @@ enum Yaku: string
             self::Shousangen => 'Deux brelans de dragons et une paire du troisième. Les deux yakuhai s’ajoutent.',
             self::Honitsu => 'Une seule famille plus des honneurs.',
             self::Chinitsu => 'Une seule famille, aucun honneur.',
-        };
+        });
     }
 
     /**

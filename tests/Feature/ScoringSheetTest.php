@@ -55,3 +55,9 @@ it('range à part les yaku de main fermée quand la main est ouverte', function 
         ->and($closed)->not->toHaveKey(0)
         ->and($closed[6])->toBe([Yaku::Chinitsu]);
 });
+
+it('garde les yaku des tests JS identiques à ceux du serveur', function () {
+    $fixture = json_decode(file_get_contents(__DIR__.'/../js/fixtures/yaku-entries.json'), true);
+
+    expect($fixture)->toBe(ScoringSheet::yakuEntries(), 'tests/js/fixtures/yaku-entries.json est périmé : régénérez-le depuis ScoringSheet::yakuEntries().');
+});

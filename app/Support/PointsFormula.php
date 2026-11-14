@@ -19,29 +19,49 @@ final class PointsFormula
 
         if ($payment->limit !== null) {
             $why = match (true) {
-                $han >= 13 => '13 han ou plus',
-                $han >= 11 => '11 ou 12 han',
-                $han >= 8 => '8 à 10 han',
-                $han >= 6 => '6 ou 7 han',
+                $han >= 13 => __('13 han ou plus'),
+                $han >= 11 => __('11 ou 12 han'),
+                $han >= 8 => __('8 à 10 han'),
+                $han >= 6 => __('6 ou 7 han'),
                 $han >= 5 => '5 han',
-                $payment->rawBase >= 2000 => "{$fu} × 2<sup>".($han + 2).'</sup> = '.Format::points($payment->rawBase).', plafonné à 2'."\u{00A0}".'000',
+                $payment->rawBase >= 2000 => __(':fu × 2<sup>:exponent</sup> = :raw, plafonné à :cap', [
+                    'fu' => $fu,
+                    'exponent' => $han + 2,
+                    'raw' => Format::points($payment->rawBase),
+                    'cap' => Format::points(2000),
+                ]),
                 default => 'kiriage mangan',
             };
-            $lines[] = '<b>'.$payment->limit->label()."</b> ({$why}) : points de base ".Format::points($base).'.';
+            $lines[] = __('<b>:limit</b> (:why) : points de base :base.', ['limit' => $payment->limit->label(), 'why' => $why, 'base' => Format::points($base)]);
         } else {
-            $lines[] = "Points de base : {$fu} × 2<sup>{$han} + 2</sup> = {$fu} × ".(2 ** ($han + 2)).' = <b>'.Format::points($base).'</b>.';
+            $lines[] = __('Points de base : :fu × 2<sup>:han + 2</sup> = :fu × :power = <b>:base</b>.', ['fu' => $fu, 'han' => $han, 'power' => 2 ** ($han + 2), 'base' => Format::points($base)]);
         }
 
-        $rounded = fn (int $raw, int $paid): string => $raw !== $paid ? ', arrondi à '.Format::points($paid) : '';
+        $rounded = fn (int $raw, int $paid): string => $raw !== $paid ? __(', arrondi à :points', ['points' => Format::points($paid)]) : '';
 
         if (! $tsumo) {
             $factor = $dealer ? 6 : 4;
-            $lines[] = 'Ron '.($dealer ? 'du donneur' : 'd’un non-donneur').' : '.Format::points($base)." × {$factor} = ".Format::points($base * $factor).$rounded($base * $factor, (int) $payment->ron).'.';
+            $lines[] = __($dealer ? 'Ron du donneur : :base × :factor = :total:rounded.' : 'Ron d’un non-donneur : :base × :factor = :total:rounded.', [
+                'base' => Format::points($base),
+                'factor' => $factor,
+                'total' => Format::points($base * $factor),
+                'rounded' => $rounded($base * $factor, (int) $payment->ron),
+            ]);
         } elseif ($dealer) {
-            $lines[] = 'Tsumo du donneur : chacun paie '.Format::points($base).' × 2 = '.Format::points($base * 2).$rounded($base * 2, (int) $payment->each).'. Total '.Format::points($payment->total).'.';
+            $lines[] = __('Tsumo du donneur : chacun paie :base × 2 = :double:rounded. Total :total.', [
+                'base' => Format::points($base),
+                'double' => Format::points($base * 2),
+                'rounded' => $rounded($base * 2, (int) $payment->each),
+                'total' => Format::points($payment->total),
+            ]);
         } else {
-            $lines[] = 'Tsumo : le donneur paie '.Format::points($base).' × 2 = '.Format::points($base * 2).$rounded($base * 2, (int) $payment->fromDealer)
-                .', chaque non-donneur '.Format::points($base).$rounded($base, (int) $payment->fromOthers).'. Total '.Format::points($payment->total).'.';
+            $lines[] = __('Tsumo : le donneur paie :base × 2 = :double:dealerRounded, chaque non-donneur :base:othersRounded. Total :total.', [
+                'base' => Format::points($base),
+                'double' => Format::points($base * 2),
+                'dealerRounded' => $rounded($base * 2, (int) $payment->fromDealer),
+                'othersRounded' => $rounded($base, (int) $payment->fromOthers),
+                'total' => Format::points($payment->total),
+            ]);
         }
 
         return $lines;

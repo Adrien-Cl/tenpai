@@ -155,3 +155,111 @@ it('passe à une nouvelle main', function () {
         ->call('nextHand')
         ->assertRedirect();
 });
+
+it('tire une main du thème demandé', function () {
+    $response = $this->get('/entrainement?theme=chinitsu');
+
+    expect($response->headers->get('Location'))->toMatch('#/entrainement/chinitsu-[a-z0-9]{8}$#');
+});
+
+it('tire une main libre pour un thème inconnu', function (string $theme) {
+    $response = $this->get('/entrainement?theme='.$theme);
+
+    expect($response->headers->get('Location'))->toMatch('#/entrainement/[a-z0-9]{8}$#');
+})->with(['inconnu' => ['kokushi'], 'libre' => ['libre']]);
+
+it('annonce le thème de la main et le garde pour la main suivante', function () {
+    Livewire::test(Training::class, ['seed' => 'honitsu-test0001'])
+        ->assertSee('<option value="honitsu" selected>Honitsu : semi-pur</option>', false)
+        ->call('nextHand')
+        ->assertRedirectContains('/entrainement/honitsu-');
+});
+
+it('repart sur une main libre après une main libre', function () {
+    $component = Livewire::test(Training::class, ['seed' => 'tenpai'])->call('nextHand');
+
+    expect($component->effects['redirect'])->toMatch('#/entrainement/[a-z0-9]{8}$#');
+});
+
+it('ouvre un exercice court à la bonne étape, les précédentes données', function (string $drill, int $first) {
+    $component = Livewire::test(Training::class, ['seed' => 'tenpai', 'drill' => $drill])
+        ->assertSet('step', $first)
+        ->assertSet('view', $first)
+        ->assertSee('<option value="'.$drill.'" selected>', false)
+        ->assertSee('0/'.(5 - $first));
+
+    $results = $component->get('results');
+
+    expect(array_keys($results))->toBe(range(0, $first - 1));
+
+    foreach ($results as $result) {
+        expect($result['given'])->toBeTrue()->and($result['ok'])->toBeFalse();
+    }
+
+    $component->call('show', 0)->assertSee('Donnée')->assertDontSee('À revoir');
+})->with([
+    'fu et points' => ['fu', 3],
+    'points seulement' => ['points', 4],
+]);
+
+it('compte un exercice court sans faute sur les seules étapes jouées', function () {
+    $answers = correctAnswers('tenpai');
+
+    $component = Livewire::test(Training::class, ['seed' => 'tenpai', 'drill' => 'fu'])
+        ->set('answers.fu', $answers['fu'])
+        ->call('check')
+        ->call('next')
+        ->set('answers.points', $answers['points'])
+        ->call('check')
+        ->assertDispatched('hand-finished', drill: 'fu', first: 3)
+        ->call('next');
+
+    $component->assertSee('2 étapes justes sur 2')->assertSee('Sans faute');
+});
+
+it('redirige vers un exercice court, et garde l’exercice pour la main suivante', function () {
+    $response = $this->get('/entrainement?exercice=points&theme=pinfu');
+
+    expect($response->headers->get('Location'))->toMatch('#/exercice/points/pinfu-[a-z0-9]{8}$#');
+
+    Livewire::test(Training::class, ['seed' => 'pinfu-test0001', 'drill' => 'points'])
+        ->call('nextHand')
+        ->assertRedirectContains('/exercice/points/pinfu-');
+});
+
+it('refuse un exercice inconnu', function () {
+    $this->get('/exercice/yaku/tenpai')->assertNotFound();
+});
+
+it('signale en fin de main les yaku oubliés ou dont on a demandé la réponse', function (bool $reveal) {
+    $expected = array_map(fn ($yakuHan) => $yakuHan->yaku->value, TrainingHand::fromSeed(Seed::fromString('tenpai'))->evaluation->yaku());
+
+    $component = Livewire::test(Training::class, ['seed' => 'tenpai'])
+        ->call($reveal ? 'reveal' : 'check')
+        ->call('next');
+
+    foreach (range(1, 3) as $step) {
+        $component->call('reveal')->call('next');
+    }
+
+    $component->call('reveal')->assertDispatched('hand-finished', missed: $expected);
+})->with(['oubliés' => [false], 'réponse demandée' => [true]]);
+
+it('ne signale aucun yaku oublié quand la main est juste ou l’étape donnée', function () {
+    $answers = correctAnswers('tenpai');
+
+    $component = Livewire::test(Training::class, ['seed' => 'tenpai'])
+        ->set('answers.yaku', $answers['yaku'])
+        ->call('check')
+        ->call('next');
+
+    foreach (range(1, 3) as $step) {
+        $component->call('reveal')->call('next');
+    }
+
+    $component->call('reveal')->assertDispatched('hand-finished', missed: []);
+
+    Livewire::test(Training::class, ['seed' => 'tenpai', 'drill' => 'points'])
+        ->call('reveal')
+        ->assertDispatched('hand-finished', missed: []);
+});

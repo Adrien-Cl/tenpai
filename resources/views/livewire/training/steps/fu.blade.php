@@ -8,17 +8,17 @@
 @endphp
 
 @if ($reading->chiitoitsu)
-    <x-answer-row id="f-fu-final" model="answers.fu.final" title="Fu de la main" sub="sept paires" :field="$fields['final'] ?? null" />
+    <x-answer-row id="f-fu-final" model="answers.fu.final" :title="__('Fu de la main')" :sub="__('sept paires')" :field="$fields['final'] ?? null" />
 @else
     <div>
         @foreach ($reading->fu->parts as $part)
             @if ($part->key === 'base')
-                <x-answer-row wire:key="fu-base" id="f-fu-base" model="answers.fu.base" title="Base" sub="fuutei" :field="$fields['base'] ?? null" />
+                <x-answer-row wire:key="fu-base" id="f-fu-base" model="answers.fu.base" :title="__('Base')" sub="fuutei" :field="$fields['base'] ?? null" />
             @elseif ($part->key === 'win')
-                <x-answer-row wire:key="fu-win" id="f-fu-win" model="answers.fu.win" :title="'Victoire par '.($h->tsumo ? 'tsumo' : 'ron')" :sub="$evaluation->menzen ? 'main fermée' : 'main ouverte'" :field="$fields['win'] ?? null" />
+                <x-answer-row wire:key="fu-win" id="f-fu-win" model="answers.fu.win" :title="$h->tsumo ? __('Victoire par tsumo') : __('Victoire par ron')" :sub="$evaluation->menzen ? __('main fermée') : __('main ouverte')" :field="$fields['win'] ?? null" />
             @elseif (str_starts_with($part->key, 'g') || $part->key === 'pair')
                 @php
-                    $sub = $part->key === 'pair' ? 'paire' : ($part->group?->meld?->label() ?? 'dans la main');
+                    $sub = $part->key === 'pair' ? __('paire') : ($part->group?->meld?->label() ?? __('dans la main'));
                 @endphp
                 <x-answer-row wire:key="fu-{{ $part->key }}" :id="'f-fu-'.$part->key" :model="'answers.fu.'.$part->key" :sub="$sub" :field="$fields[$part->key] ?? null"
                               x-on:mouseenter="lit = '{{ $part->key }}'" x-on:mouseleave="lit = null" x-on:focusin="lit = '{{ $part->key }}'" x-on:focusout="lit = null"
@@ -36,8 +36,8 @@
                     $waitField = $fields['waittype'] ?? null;
                 @endphp
                 <fieldset wire:key="fu-waittype" class="border-t border-paper-line py-3">
-                    <legend class="float-left mb-2 w-full font-bold">Type d’attente <span class="font-normal text-ink-muted">sur {{ \App\Domain\Mahjong\Tile::name($h->win) }}</span>
-                        @if ($waitField && $waitField['state'] === 'ok')<span class="ml-2 text-lg text-ok" aria-hidden="true">◎</span><span class="sr-only">Juste</span>@endif
+                    <legend class="float-left mb-2 w-full font-bold">{{ __('Type d’attente') }} <span class="font-normal text-ink-muted">{{ __('sur :tile', ['tile' => \App\Domain\Mahjong\Tile::name($h->win)]) }}</span>
+                        @if ($waitField && $waitField['state'] === 'ok')<span class="ml-2 text-lg text-ok" aria-hidden="true">◎</span><span class="sr-only">{{ __('Juste') }}</span>@endif
                         @if ($waitField && $waitField['state'] === 'ko')<span class="ml-2 text-sm text-ko">→ {{ $waitField['expected'] }}</span>@endif
                     </legend>
                     <div class="clear-both flex flex-wrap gap-2">
@@ -53,12 +53,12 @@
                         @endforeach
                     </div>
                 </fieldset>
-                <x-answer-row wire:key="fu-wait" id="f-fu-wait" model="answers.fu.wait" title="Fu d’attente" :field="$fields['wait'] ?? null" />
+                <x-answer-row wire:key="fu-wait" id="f-fu-wait" model="answers.fu.wait" :title="__('Fu d’attente')" :field="$fields['wait'] ?? null" />
             @endif
         @endforeach
 
-        <x-answer-row wire:key="fu-raw" id="f-fu-raw" model="answers.fu.raw" title="Total avant arrondi" :field="$fields['raw'] ?? null" class="mt-2 border-t-2! border-ink/70!" />
-        <x-answer-row wire:key="fu-final" id="f-fu-final" model="answers.fu.final" title="Fu de la main" sub="après arrondi" :field="$fields['final'] ?? null" />
+        <x-answer-row wire:key="fu-raw" id="f-fu-raw" model="answers.fu.raw" :title="__('Total avant arrondi')" :field="$fields['raw'] ?? null" class="mt-2 border-t-2! border-ink/70!" />
+        <x-answer-row wire:key="fu-final" id="f-fu-final" model="answers.fu.final" :title="__('Fu de la main')" :sub="__('après arrondi')" :field="$fields['final'] ?? null" />
     </div>
 @endif
 
@@ -66,7 +66,7 @@
     <p class="mt-4 font-bold">
         {{ $evaluation->fu() }} fu.
         @if ($evaluation->payment()->limit)
-            <span class="font-normal text-ink-muted">Au-delà du mangan, les fu ne changent plus les points, mais on les compte quand même.</span>
+            <span class="font-normal text-ink-muted">{{ __('Au-delà du mangan, les fu ne changent plus les points, mais on les compte quand même.') }}</span>
         @endif
     </p>
 @endif

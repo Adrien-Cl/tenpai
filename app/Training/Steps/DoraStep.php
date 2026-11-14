@@ -24,12 +24,12 @@ final class DoraStep implements Step
 
     public function title(): string
     {
-        return 'Dora et total des han';
+        return __('Dora et total des han');
     }
 
     public function help(): string
     {
-        return 'L’indicateur désigne la tuile suivante : 9 → 1, Nord → Est, Chun → Haku. Chaque kan ajoute un indicateur.';
+        return __('L’indicateur désigne la tuile suivante : 9 → 1, Nord → Est, Chun → Haku. Chaque kan ajoute un indicateur.');
     }
 
     public function scoringTab(): string
@@ -44,17 +44,17 @@ final class DoraStep implements Step
      */
     public static function fields(TrainingHand $hand): array
     {
-        $fields = ['dora' => ['label' => 'Dora', 'sub' => 'tuile suivant chaque indicateur']];
+        $fields = ['dora' => ['label' => 'Dora', 'sub' => __('tuile suivant chaque indicateur')]];
 
         if ($hand->rules->aka) {
-            $fields['aka'] = ['label' => 'Aka-dora', 'sub' => 'cinq rouges'];
+            $fields['aka'] = ['label' => 'Aka-dora', 'sub' => __('cinq rouges')];
         }
 
         if ($hand->hand()->riichi) {
-            $fields['ura'] = ['label' => 'Ura-dora', 'sub' => 'révélés grâce au riichi'];
+            $fields['ura'] = ['label' => 'Ura-dora', 'sub' => __('révélés grâce au riichi')];
         }
 
-        $fields['han'] = ['label' => 'Total des han', 'sub' => 'yaku + tous les dora'];
+        $fields['han'] = ['label' => __('Total des han'), 'sub' => __('yaku + tous les dora')];
 
         return $fields;
     }
@@ -96,7 +96,7 @@ final class DoraStep implements Step
         $count = $evaluation->doraHan();
 
         return [
-            'result' => $result->toArray($ok, ($count === 0 ? 'Aucun dora' : $count.' dora').", {$evaluation->han} han au total"),
+            'result' => $result->toArray($ok, ($count === 0 ? __('Aucun dora, :han han au total', ['han' => $evaluation->han]) : __(':count dora, :han han au total', ['count' => $count, 'han' => $evaluation->han]))),
             'answers' => $answers,
         ];
     }

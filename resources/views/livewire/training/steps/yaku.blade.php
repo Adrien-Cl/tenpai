@@ -8,23 +8,23 @@
     <div x-data="yakuPicker({ entries: @js(\App\View\ScoringSheet::yakuEntries()), locked: false })"
          x-modelable="picked" wire:model="answers.yaku.picked" class="space-y-3">
 
-        <div class="flex min-h-11 flex-wrap items-center gap-2" aria-label="Yaku annoncés">
+        <div class="flex min-h-11 flex-wrap items-center gap-2" aria-label="{{ __('Yaku annoncés') }}">
             <template x-for="id in picked" :key="id">
-                <button type="button" class="chip chip--picked" x-on:click="remove(id)" :aria-label="'Retirer ' + entry(id).label">
+                <button type="button" class="chip chip--picked" x-on:click="remove(id)" :aria-label="@js(__('Retirer')) + ' ' + entry(id).label">
                     <span x-text="entry(id).label"></span><span class="opacity-60" aria-hidden="true">✕</span>
                 </button>
             </template>
-            <span x-show="!picked.length" class="text-ink-faint">Aucun yaku annoncé pour l’instant.</span>
+            <span x-show="!picked.length" class="text-ink-faint">{{ __('Aucun yaku annoncé pour l’instant.') }}</span>
         </div>
 
         <div class="relative">
-            <label for="yaku-search" class="sr-only">Ajouter un yaku</label>
+            <label for="yaku-search" class="sr-only">{{ __('Ajouter un yaku') }}</label>
             <input id="yaku-search" x-ref="input" type="text" role="combobox"
                    aria-autocomplete="list" aria-controls="yaku-options" aria-describedby="yaku-hint"
                    :aria-expanded="(options.length > 0).toString()"
                    :aria-activedescendant="active >= 0 && options[active] ? 'yopt-' + options[active].id : null"
                    autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false" enterkeyhint="done"
-                   placeholder="Tapez un yaku : rii, tan, pinfu…"
+                   placeholder="{{ __('Tapez un yaku : rii, tan, pinfu…') }}"
                    x-model="query"
                    x-on:keydown.arrow-down.prevent="move(1)"
                    x-on:keydown.arrow-up.prevent="move(-1)"
@@ -34,7 +34,7 @@
                    x-on:blur="close()"
                    class="w-full rounded-xl bg-paper-sunk px-4 py-3 text-lg shadow-[inset_0_0_0_1px_var(--paper-line)] placeholder:text-ink-faint focus:shadow-[inset_0_0_0_2px_var(--ink),0_0_0_4px_rgb(227_167_47/0.35)] focus:outline-none">
 
-            <ul id="yaku-options" role="listbox" aria-label="Suggestions" x-cloak x-show="options.length"
+            <ul id="yaku-options" role="listbox" aria-label="{{ __('Suggestions') }}" x-cloak x-show="options.length"
                 x-on:pointerdown.prevent
                 class="absolute inset-x-0 z-20 mt-2 max-h-80 overflow-y-auto rounded-xl bg-paper py-1.5 shadow-[0_18px_40px_-16px_rgb(0_0_0/0.55)] ring-1 ring-paper-line">
                 <template x-for="(option, i) in options" :key="option.id">
@@ -55,13 +55,13 @@
         <div>
             <button type="button" class="inline-flex items-center gap-2 text-sm font-bold text-ink underline decoration-paper-line decoration-2 underline-offset-4 hover:decoration-ink"
                     x-on:click="browsing = !browsing" :aria-expanded="browsing.toString()" aria-controls="yaku-browse">
-                <span x-text="browsing ? 'Masquer la liste' : 'Parcourir la liste des yaku'"></span>
+                <span x-text="browsing ? @js(__('Masquer la liste')) : @js(__('Parcourir la liste des yaku'))"></span>
             </button>
             <div id="yaku-browse" x-cloak x-show="browsing" x-collapse>
                 <div class="mt-4 space-y-4">
                     <template x-for="[han, list] in groups" :key="han">
                         <div>
-                            <p class="text-sm text-ink-muted" x-text="han + ' han (main fermée)'"></p>
+                            <p class="text-sm text-ink-muted" x-text="han + ' ' + @js(__('han (main fermée)'))"></p>
                             <div class="mt-2 flex flex-wrap gap-2">
                                 <template x-for="e in list" :key="e.id">
                                     <button type="button" class="chip" :class="picked.includes(e.id) && 'chip--picked'"
@@ -83,26 +83,26 @@
         $label = fn (string $id) => (\App\Domain\Mahjong\Yaku::tryFrom($id) ?? \App\Domain\Mahjong\Yakuman::from($id));
     @endphp
 
-    <div class="flex flex-wrap gap-2" aria-label="Correction des yaku">
+    <div class="flex flex-wrap gap-2" aria-label="{{ __('Correction des yaku') }}">
         @foreach ($correct as $yaku)
             @php($state = $fields[$yaku->value]['state'])
             <span @class(['chip', 'chip--ok' => $state === 'ok', 'chip--missed' => $state === 'missed', 'chip--picked' => $state === 'revealed'])>
                 {{ $yaku->shortLabel() }}
-                @if ($state === 'missed')<span class="text-xs font-normal">oublié</span>@endif
+                @if ($state === 'missed')<span class="text-xs font-normal">{{ __('oublié') }}</span>@endif
             </span>
         @endforeach
         @foreach ($wrong as $id)
-            <span class="chip chip--extra"><s>{{ $label($id) instanceof \App\Domain\Mahjong\Yaku ? $label($id)->shortLabel() : $label($id)->label() }}</s><span class="text-xs font-normal">en trop</span></span>
+            <span class="chip chip--extra"><s>{{ $label($id) instanceof \App\Domain\Mahjong\Yaku ? $label($id)->shortLabel() : $label($id)->label() }}</s><span class="text-xs font-normal">{{ __('en trop') }}</span></span>
         @endforeach
     </div>
 
     <p @class(['mt-5 font-bold', 'text-ok' => $result['ok'], 'text-ko' => ! $result['ok'] && ! $result['revealed']])>
         @if ($result['revealed'])
-            Les yaku de cette main :
+            {{ __('Les yaku de cette main :') }}
         @elseif ($result['ok'])
-            Tous les yaku sont trouvés.
+            {{ __('Tous les yaku sont trouvés.') }}
         @else
-            {{ $found }} sur {{ count($correct) }} trouvé{{ $found > 1 ? 's' : '' }}@if ($wrong !== []), {{ count($wrong) }} en trop @endif.
+            {{ trans_choice(':found sur :total trouvé|:found sur :total trouvés', $found, ['found' => $found, 'total' => count($correct)]) }}@if ($wrong !== []){{ __(', :count en trop', ['count' => count($wrong)]) }}@endif.
         @endif
     </p>
 
@@ -117,12 +117,12 @@
             @php($y = $label($id))
             <li class="flex gap-3">
                 <span class="mt-2 size-2 flex-none rounded-full border-2 border-ko"></span>
-                <span><b>{{ $y->label() }}</b> n’est pas dans cette main.@if ($y instanceof \App\Domain\Mahjong\Yakuman) C’est un yakuman, et Tenpai n’en distribue jamais.@endif Condition : {{ $y->description() }}</span>
+                <span>{!! __('<b>:yaku</b> n’est pas dans cette main.', ['yaku' => e($y->label())]) !!}@if ($y instanceof \App\Domain\Mahjong\Yakuman) {{ __('C’est un yakuman, et Tenpai n’en distribue jamais.') }}@endif {{ __('Condition : :description', ['description' => $y->description()]) }}</span>
             </li>
         @endforeach
     </ul>
 
     @if ($evaluation->multiple)
-        <p class="mt-5 rounded-lg bg-paper-sunk px-4 py-3 text-sm text-ink-muted">Cette main se découpe de plusieurs façons. On retient la lecture qui rapporte le plus de points.</p>
+        <p class="mt-5 rounded-lg bg-paper-sunk px-4 py-3 text-sm text-ink-muted">{{ __('Cette main se découpe de plusieurs façons. On retient la lecture qui rapporte le plus de points.') }}</p>
     @endif
 @endif

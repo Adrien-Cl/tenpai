@@ -111,9 +111,9 @@ final class Tile
     {
         $label = $tile < 27
             ? self::number($tile).self::SUIT_LETTERS[self::suit($tile)]
-            : self::HONOR_LABELS[$tile - 27];
+            : Text::get(self::HONOR_LABELS[$tile - 27]);
 
-        return $red ? $label.' rouge' : $label;
+        return $red ? Text::get(':tile rouge', ['tile' => $label]) : $label;
     }
 
     /**
@@ -122,10 +122,10 @@ final class Tile
     public static function name(int $tile, bool $red = false): string
     {
         $name = $tile < 27
-            ? self::number($tile).' de '.self::SUIT_NAMES[self::suit($tile)]
-            : self::HONOR_NAMES[$tile - 27];
+            ? Text::get(':number de '.self::SUIT_NAMES[self::suit($tile)], ['number' => self::number($tile)])
+            : Text::get(self::HONOR_NAMES[$tile - 27]);
 
-        return $red ? $name.' rouge' : $name;
+        return $red ? Text::get(':tile rouge', ['tile' => $name]) : $name;
     }
 
     /**

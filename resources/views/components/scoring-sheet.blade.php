@@ -6,15 +6,15 @@
 @props(['sheet', 'training' => false, 'tab' => 'points'])
 @php
     $tabs = [
-        'han' => ['Han', 'yaku, dora'],
-        'fu' => ['Fu', 'la recette'],
-        'points' => ['Points', 'ce que ça paie'],
+        'han' => ['Han', __('yaku, dora')],
+        'fu' => ['Fu', __('la recette')],
+        'points' => ['Points', __('ce que ça paie')],
     ];
 @endphp
 <div x-data="scoringSheet({ tab: @js($tab), useHash: @js(! $training) })"
      x-on:scoring-tab.window="tab = $event.detail"
      {{ $attributes }}>
-    <div class="grid grid-cols-3 gap-1 rounded-xl bg-paper-sunk p-1" role="tablist" aria-label="Rubriques du barème">
+    <div class="grid grid-cols-3 gap-1 rounded-xl bg-paper-sunk p-1" role="tablist" aria-label="{{ __('Rubriques du barème') }}">
         @foreach ($tabs as $key => [$label, $caption])
             <button type="button" role="tab" id="tab-{{ $key }}" aria-controls="panel-{{ $key }}"
                     class="flex flex-col items-center rounded-lg px-2 py-2 transition-colors sm:py-2.5"

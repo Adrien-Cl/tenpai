@@ -15,13 +15,13 @@ enum Limit: string
 
     public function label(): string
     {
-        return match ($this) {
+        return Text::get(match ($this) {
             self::Mangan => 'Mangan',
             self::Haneman => 'Haneman',
             self::Baiman => 'Baiman',
             self::Sanbaiman => 'Sanbaiman',
             self::Kazoe => 'Yakuman compté',
-        };
+        });
     }
 
     /**
@@ -54,12 +54,12 @@ enum Limit: string
 
     public function condition(): string
     {
-        return match ($this) {
+        return Text::get(match ($this) {
             self::Mangan => '5 han, ou 4 han dès 40 fu, 3 han dès 70 fu',
             self::Haneman => '6 ou 7 han',
             self::Baiman => '8 à 10 han',
             self::Sanbaiman => '11 ou 12 han',
             self::Kazoe => '13 han et plus',
-        };
+        });
     }
 }

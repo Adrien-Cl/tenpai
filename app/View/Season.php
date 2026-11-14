@@ -47,11 +47,11 @@ enum Season: string
      */
     public function kigo(): string
     {
-        return match ($this) {
+        return __(match ($this) {
             self::Spring => 'Cerisiers en fleurs',
             self::Summer => 'Bambous et moineaux',
             self::Autumn => 'Érables et lune',
             self::Winter => 'Neige sur les bambous',
-        };
+        });
     }
 }

@@ -4,7 +4,8 @@
     $h = $hand->hand();
     $payment = $evaluation->payment();
     $okCount = count(array_filter($results, fn ($r) => $r['ok']));
-    $fmt = fn (int $n) => \App\Support\Format::points($n);
+    $played = $this->playedSteps();
+    $fmt =fn (int $n) => \App\Support\Format::points($n);
 
     // Bâtons de points, du plus gros au plus petit (au plus cinq dessinés par valeur).
     $remaining = $payment->total;
@@ -31,18 +32,21 @@
     <header class="flex gap-5 px-5 pt-6 sm:px-8 sm:pt-8">
         <span class="step-tile hidden h-14 w-11 shrink-0 sm:grid"><x-glyph char="計" class="size-6" /></span>
         <div class="min-w-0 flex-1 pr-24">
-            <p class="text-sm text-ink-muted">Récapitulatif · {{ $okCount }} étape{{ $okCount > 1 ? 's' : '' }} juste{{ $okCount > 1 ? 's' : '' }} sur 5</p>
+            <p class="text-sm text-ink-muted">
+                {{ $this->drillLabel() ? __('Exercice :drill', ['drill' => mb_strtolower($this->drillLabel())]) : __('Récapitulatif') }} ·
+                {{ trans_choice(':count étape juste sur :played|:count étapes justes sur :played', $okCount, ['played' => $played]) }}
+            </p>
             <h2 id="recap-title" class="display mt-0.5 text-2xl sm:text-[1.9rem]">
                 {{ $evaluation->han }} han, {{ $evaluation->fu() }} fu{{ $payment->limit ? " · ".$payment->limit->label() : "" }}
             </h2>
         </div>
         <div class="absolute top-6 right-5 flex flex-col items-center gap-1.5 sm:top-7 sm:right-8">
-            @if ($okCount === 5)
+            @if ($okCount === $played)
                 <span class="hanko is-new size-20!" aria-hidden="true"><span class="flex flex-col"><x-glyph char="満" class="size-8" /><x-glyph char="点" class="size-8" /></span></span>
-                <span class="text-xs font-bold text-ok">Sans faute</span>
+                <span class="text-xs font-bold text-ok">{{ __('Sans faute') }}</span>
             @else
-                <span class="hanko hanko--ko is-new size-20!" aria-hidden="true"><span class="display num text-4xl">{{ $okCount }}<span class="text-xl">/5</span></span></span>
-                <span class="text-xs font-bold text-ko">{{ $okCount }} juste{{ $okCount > 1 ? 's' : '' }}</span>
+                <span class="hanko hanko--ko is-new size-20!" aria-hidden="true"><span class="display num text-4xl">{{ $okCount }}<span class="text-xl">/{{ $played }}</span></span></span>
+                <span class="text-xs font-bold text-ko">{{ trans_choice(':count juste|:count justes', $okCount) }}</span>
             @endif
         </div>
     </header>
@@ -59,11 +63,11 @@
         </p>
         <p class="mt-1 text-ink-muted">
             @if (! $h->tsumo)
-                points en ron, payés par celui qui a jeté la tuile
+                {{ __('points en ron, payés par celui qui a jeté la tuile') }}
             @elseif ($evaluation->dealer)
-                de chaque adversaire, {{ $fmt($payment->total) }} au total
+                {{ __('de chaque adversaire, :total au total', ['total' => $fmt($payment->total)]) }}
             @else
-                par non-donneur / par le donneur, {{ $fmt($payment->total) }} au total
+                {{ __('par non-donneur / par le donneur, :total au total', ['total' => $fmt($payment->total)]) }}
             @endif
         </p>
     </div>
@@ -71,7 +75,7 @@
     <div class="grid gap-8 px-5 py-6 sm:px-8 md:grid-cols-[minmax(0,1fr)_15rem]">
         <div>
             <table class="w-full">
-                <caption class="sr-only">Détail des han</caption>
+                <caption class="sr-only">{{ __('Détail des han') }}</caption>
                 <tbody>
                     @foreach ($evaluation->yaku() as $yakuHan)
                         <tr class="border-b border-paper-line"><td class="py-2">{{ $yakuHan->yaku->label() }}</td><td class="display num py-2 text-right">{{ $yakuHan->han }}</td></tr>
@@ -81,7 +85,7 @@
                             <tr class="border-b border-paper-line"><td class="py-2">{{ $label }}</td><td class="display num py-2 text-right">{{ $count }}</td></tr>
                         @endif
                     @endforeach
-                    <tr><td class="pt-3 font-bold">Total</td><td class="display num pt-3 text-right text-lg">{{ $evaluation->han }} han</td></tr>
+                    <tr><td class="pt-3 font-bold">{{ __('Total') }}</td><td class="display num pt-3 text-right text-lg">{{ $evaluation->han }} han</td></tr>
                 </tbody>
             </table>
             <div class="mt-6 space-y-1.5 rounded-lg bg-paper-sunk px-4 py-3">
@@ -89,10 +93,11 @@
                     <p>{!! $line !!}</p>
                 @endforeach
             </div>
+            <p class="mt-3 text-sm text-ink-muted">{{ __('Compté avec : :rules.', ['rules' => \App\Support\TableRules::describe($hand->rules)]) }}</p>
         </div>
 
-        <div aria-label="Bâtons de points pour {{ $fmt($payment->total) }} points">
-            <p class="text-sm text-ink-muted">En bâtons, {{ $fmt($payment->total) }} points</p>
+        <div aria-label="{{ __('Bâtons de points pour :total points', ['total' => $fmt($payment->total)]) }}">
+            <p class="text-sm text-ink-muted">{{ __('En bâtons, :total points', ['total' => $fmt($payment->total)]) }}</p>
             <div class="mt-3 space-y-3">
                 @foreach ($sticks as [$value, $count])
                     <div class="flex items-center gap-3">
@@ -109,11 +114,18 @@
     </div>
 
     <footer class="flex flex-wrap items-center gap-3 border-t border-paper-line px-5 py-4 sm:px-8">
-        <button type="button" class="btn btn-primary" wire:click="nextHand" data-shortcut="n" x-init="$el.focus({ preventScroll: true })">Main suivante</button>
-        <span class="hidden text-sm text-ink-muted md:inline">ou touche N</span>
-        <button type="button" class="btn ml-auto px-3 text-ink-muted hover:text-ink" x-on:click="share()">
-            <span x-show="!copied">Partager cette main</span>
-            <span x-cloak x-show="copied">Lien copié</span>
+        <button type="button" class="btn btn-primary" wire:click="nextHand" data-shortcut="n" x-init="$el.focus({ preventScroll: true })">{{ __('Main suivante') }}</button>
+        <span class="hidden text-sm text-ink-muted md:inline">{{ __('ou touche N') }}</span>
+        @if ($daily)
+            <button type="button" class="btn btn-quiet ml-auto" x-data="{ sent: false }"
+                    x-on:click="sent = await $store.progress.shareDaily(@js($daily), @js(localized_route('daily'))); setTimeout(() => sent = false, 2200)">
+                <span x-show="!sent">{{ __('Partager mon résultat') }}</span>
+                <span x-cloak x-show="sent">{{ __('Résultat copié') }}</span>
+            </button>
+        @endif
+        <button type="button" @class(['btn px-3 text-ink-muted hover:text-ink', 'ml-auto' => ! $daily]) x-on:click="share()">
+            <span x-show="!copied">{{ __('Partager cette main') }}</span>
+            <span x-cloak x-show="copied">{{ __('Lien copié') }}</span>
         </button>
     </footer>
 </section>

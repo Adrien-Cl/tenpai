@@ -27,12 +27,12 @@ final class YakuStep implements Step
 
     public function title(): string
     {
-        return 'Quels yaku ?';
+        return __('Quels yaku ?');
     }
 
     public function help(): string
     {
-        return 'Tapez le nom de chaque yaku : des suggestions apparaissent dès les premières lettres. Les dora ne sont pas des yaku, ils viennent à l’étape 3.';
+        return __('Tapez le nom de chaque yaku : des suggestions apparaissent dès les premières lettres. Les dora ne sont pas des yaku, ils viennent à l’étape 3.');
     }
 
     public function scoringTab(): string

@@ -41,7 +41,7 @@ enum Yakuman: string
 
     public function gloss(): string
     {
-        return match ($this) {
+        return Text::get(match ($this) {
             self::Kokushi => 'treize orphelins',
             self::Suuankou => 'quatre brelans cachés',
             self::Daisangen => 'grands trois dragons',
@@ -54,12 +54,12 @@ enum Yakuman: string
             self::Suukantsu => 'quatre carrés',
             self::Tenhou => 'main du ciel',
             self::Chiihou => 'main de la terre',
-        };
+        });
     }
 
     public function description(): string
     {
-        return match ($this) {
+        return Text::get(match ($this) {
             self::Kokushi => 'Une de chaque terminale et de chaque honneur, plus un double de l’une d’elles.',
             self::Suuankou => 'Quatre brelans ou carrés fermés, main fermée.',
             self::Daisangen => 'Trois brelans de dragons.',
@@ -72,7 +72,7 @@ enum Yakuman: string
             self::Suukantsu => 'Quatre kan.',
             self::Tenhou => 'Le donneur gagne sur sa main de départ.',
             self::Chiihou => 'Un non-donneur gagne sur sa première pioche, sans appel avant.',
-        };
+        });
     }
 
     /**

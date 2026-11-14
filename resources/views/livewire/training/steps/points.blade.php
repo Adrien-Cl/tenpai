@@ -8,8 +8,8 @@
 @endphp
 
 <fieldset class="pb-3">
-    <legend class="float-left mb-2 w-full font-bold">Limite atteinte <span class="font-normal text-ink-muted">{{ $evaluation->han }} han, {{ $evaluation->fu() }} fu</span>
-        @if ($limitField && $limitField['state'] === 'ok')<span class="ml-2 text-lg text-ok" aria-hidden="true">◎</span><span class="sr-only">Juste</span>@endif
+    <legend class="float-left mb-2 w-full font-bold">{{ __('Limite atteinte') }} <span class="font-normal text-ink-muted">{{ $evaluation->han }} han, {{ $evaluation->fu() }} fu</span>
+        @if ($limitField && $limitField['state'] === 'ok')<span class="ml-2 text-lg text-ok" aria-hidden="true">◎</span><span class="sr-only">{{ __('Juste') }}</span>@endif
         @if ($limitField && $limitField['state'] === 'ko')<span class="ml-2 text-sm text-ko">→ {{ $limitField['expected'] }}</span>@endif
     </legend>
     <div class="clear-both flex flex-wrap gap-2">

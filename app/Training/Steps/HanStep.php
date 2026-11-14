@@ -24,12 +24,12 @@ final class HanStep implements Step
 
     public function title(): string
     {
-        return 'Combien de han vaut chaque yaku ?';
+        return __('Combien de han vaut chaque yaku ?');
     }
 
     public function help(): string
     {
-        return 'Attention : plusieurs yaku perdent un han quand la main est ouverte, et certains exigent une main fermée.';
+        return __('Attention : plusieurs yaku perdent un han quand la main est ouverte, et certains exigent une main fermée.');
     }
 
     public function scoringTab(): string
@@ -46,7 +46,7 @@ final class HanStep implements Step
         foreach ($evaluation->yaku() as $yakuHan) {
             $yaku = $yakuHan->yaku;
             $why = ! $evaluation->menzen && $yaku->losesHanWhenOpen()
-                ? "{$yaku->closedHan()} han fermé, {$yaku->openHan()} une fois la main ouverte."
+                ? __(':closed han fermé, :open une fois la main ouverte.', ['closed' => $yaku->closedHan(), 'open' => (int) $yaku->openHan()])
                 : null;
 
             $ok = $result->mark($yaku->value, Answers::int($answers, $yaku->value) === $yakuHan->han, (string) $yakuHan->han, $why) && $ok;
@@ -57,7 +57,7 @@ final class HanStep implements Step
         }
 
         return [
-            'result' => $result->toArray($ok, $evaluation->yakuHan().' han de yaku'),
+            'result' => $result->toArray($ok, __(':han han de yaku', ['han' => $evaluation->yakuHan()])),
             'answers' => $answers,
         ];
     }

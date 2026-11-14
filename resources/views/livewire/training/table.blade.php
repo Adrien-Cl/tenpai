@@ -11,23 +11,23 @@
         return $tiles;
     };
     $tags = [];
-    if ($h->doubleRiichi) $tags[] = 'Riichi dès la première défausse';
-    if ($h->ippatsu) $tags[] = 'Gagnée au tour suivant le riichi, sans appel';
-    if ($h->chankan) $tags[] = 'Ron sur la tuile ajoutée au kan d’un adversaire';
-    if ($h->haitei) $tags[] = $h->tsumo ? 'Dernière tuile du mur' : 'Dernière défausse de la partie';
-    if ($h->rinshan) $tags[] = 'Tuile piochée après le kan';
+    if ($h->doubleRiichi) $tags[] = __('Riichi dès la première défausse');
+    if ($h->ippatsu) $tags[] = __('Gagnée au tour suivant le riichi, sans appel');
+    if ($h->chankan) $tags[] = __('Ron sur la tuile ajoutée au kan d’un adversaire');
+    if ($h->haitei) $tags[] = $h->tsumo ? __('Dernière tuile du mur') : __('Dernière défausse de la partie');
+    if ($h->rinshan) $tags[] = __('Tuile piochée après le kan');
 @endphp
-<section class="felt px-3 pt-5 pb-6 sm:px-8 sm:pt-7 sm:pb-8" aria-label="Main gagnante" x-intersect:enter="tableVisible = true" x-intersect:leave="tableVisible = false">
+<section class="felt px-3 pt-5 pb-6 sm:px-8 sm:pt-7 sm:pb-8" aria-label="{{ __('Main gagnante') }}" x-intersect:enter="tableVisible = true" x-intersect:leave="tableVisible = false">
     <div class="flex flex-wrap items-start gap-x-6 gap-y-4">
         {{-- Vents de la manche et du siège. --}}
-        <div class="flex items-center gap-4" role="group" aria-label="Vents">
+        <div class="flex items-center gap-4" role="group" aria-label="{{ __('Vents') }}">
             <div class="flex items-center gap-2.5">
                 <span class="step-tile h-10 w-8 text-lg"><x-glyph :char="$h->round->kanji()" class="size-5" /></span>
-                <span class="text-sm leading-tight text-felt-muted">Manche<br><b class="text-base text-felt-ink">{{ $h->round->label() }}</b></span>
+                <span class="text-sm leading-tight text-felt-muted">{{ __('Manche') }}<br><b class="text-base text-felt-ink">{{ $h->round->label() }}</b></span>
             </div>
             <div class="flex items-center gap-2.5">
                 <span class="step-tile h-10 w-8 text-lg"><x-glyph :char="$h->seat->kanji()" class="size-5" /></span>
-                <span class="text-sm leading-tight text-felt-muted">Votre siège<br><b class="text-base text-felt-ink">{{ $h->seat->label() }}</b>@if ($h->isDealer())<span class="text-gilt"> · donneur</span>@endif</span>
+                <span class="text-sm leading-tight text-felt-muted">{{ __('Votre siège') }}<br><b class="text-base text-felt-ink">{{ $h->seat->label() }}</b>@if ($h->isDealer())<span class="text-gilt"> · {{ __('donneur') }}</span>@endif</span>
             </div>
         </div>
 
@@ -43,22 +43,22 @@
                 <span class="rounded-lg bg-felt-deep/60 px-3 py-2 text-sm text-felt-ink">{{ $tag }}</span>
             @endforeach
             <button type="button" class="rounded-lg px-3 py-2 text-sm text-felt-muted hover:bg-felt-raised hover:text-felt-ink" x-on:click="share()">
-                <span x-show="!copied">Partager cette main</span>
-                <span x-cloak x-show="copied" class="text-gilt">Lien copié</span>
+                <span x-show="!copied">{{ __('Partager cette main') }}</span>
+                <span x-cloak x-show="copied" class="text-gilt">{{ __('Lien copié') }}</span>
             </button>
         </div>
     </div>
 
     {{-- La main : tuiles cachées, tuile gagnante à part, appels à droite. --}}
     <div class="mt-8 flex flex-wrap items-end gap-x-[calc(var(--tile)*0.55)] gap-y-6 sm:mt-10" style="--tile: clamp(1.4rem, calc((100vw - 3.5rem) / 14.6), 3.15rem)">
-        <span class="tiles gap-[1px]" aria-label="Tuiles en main">
+        <span class="tiles gap-[1px]" aria-label="{{ __('Tuiles en main') }}">
             @foreach ($g->handTiles as $i => $t)
                 @php($key = $groups['hand'][$i] ?? null)
                 <x-tile :tile="$t->tile" :red="$t->red" :group="$key" />
             @endforeach
         </span>
 
-        <span class="relative flex flex-col items-center" aria-label="Tuile gagnante">
+        <span class="relative flex flex-col items-center" aria-label="{{ __('Tuile gagnante') }}">
             <span class="tiles">
                 <x-tile :tile="$g->winTile->tile" :red="$g->winTile->red" win :group="$groups['win']" />
             </span>
@@ -101,7 +101,7 @@
             </div>
         @endforeach
         @if ($hand->rules->aka)
-            <p class="pb-1 text-sm text-felt-muted">Chaque cinq rouge vaut 1 dora.</p>
+            <p class="pb-1 text-sm text-felt-muted">{{ __('Chaque cinq rouge vaut 1 dora.') }}</p>
         @endif
     </div>
 </section>

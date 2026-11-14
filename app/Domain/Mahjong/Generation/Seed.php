@@ -39,13 +39,41 @@ final readonly class Seed
 
     public static function random(): self
     {
+        return new self(self::randomPart());
+    }
+
+    /**
+     * Une graine d'entraînement ciblé : « chinitsu-ab12cd34 ». Le thème fait partie de la graine,
+     * l'adresse redonne donc la même main, du même thème.
+     */
+    public static function themed(Theme $theme): self
+    {
+        return $theme === Theme::Free ? self::random() : new self($theme->value.'-'.self::randomPart());
+    }
+
+    /**
+     * Le thème imposé par la graine, s'il y en a un.
+     */
+    public function theme(): ?Theme
+    {
+        if (preg_match('/^([a-z]+)-[a-z0-9]{8}$/', $this->value, $matches) !== 1) {
+            return null;
+        }
+
+        $theme = Theme::tryFrom($matches[1]);
+
+        return $theme === Theme::Free ? null : $theme;
+    }
+
+    private static function randomPart(): string
+    {
         $value = '';
 
         for ($i = 0; $i < 8; $i++) {
             $value .= self::ALPHABET[random_int(0, strlen(self::ALPHABET) - 1)];
         }
 
-        return new self($value);
+        return $value;
     }
 
     /**

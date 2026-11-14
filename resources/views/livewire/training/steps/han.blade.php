@@ -1,6 +1,6 @@
 {{-- Étape 2 : la valeur de chaque yaku. --}}
 @php($evaluation = $hand->evaluation)
-<p class="mb-2 text-sm text-ink-muted">Main {{ $evaluation->menzen ? 'fermée' : 'ouverte' }}.</p>
+<p class="mb-2 text-sm text-ink-muted">{{ $evaluation->menzen ? __('Main fermée.') : __('Main ouverte.') }}</p>
 <div>
     @foreach ($evaluation->yaku() as $yakuHan)
         <x-answer-row wire:key="han-{{ $yakuHan->yaku->value }}"
@@ -13,5 +13,5 @@
 </div>
 
 @if ($result)
-    <p class="mt-4 font-bold">Han des yaku : {{ $evaluation->yakuHan() }} ({{ $evaluation->menzen ? 'main fermée' : 'main ouverte' }}).</p>
+    <p class="mt-4 font-bold">{{ $evaluation->menzen ? __('Han des yaku : :han (main fermée).', ['han' => $evaluation->yakuHan()]) : __('Han des yaku : :han (main ouverte).', ['han' => $evaluation->yakuHan()]) }}</p>
 @endif

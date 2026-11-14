@@ -3,6 +3,7 @@
 use App\Domain\Mahjong\Generation\GeneratedHand;
 use App\Domain\Mahjong\Generation\HandGenerator;
 use App\Domain\Mahjong\Generation\Seed;
+use App\Domain\Mahjong\Generation\Theme;
 use App\Domain\Mahjong\Generation\TileInstance;
 use App\Domain\Mahjong\Rules;
 use App\Domain\Mahjong\Scoring\Evaluator;
@@ -76,3 +77,25 @@ it('normalise et valide les graines', function () {
         ->and(Seed::isValid(str_repeat('a', 41)))->toBeFalse()
         ->and(Seed::random()->value)->toMatch('/^[a-z0-9]{8}$/');
 });
+
+it('garde le thème dans la graine d’un entraînement ciblé', function () {
+    $seed = Seed::themed(Theme::Chinitsu);
+
+    expect($seed->value)->toMatch('/^chinitsu-[a-z0-9]{8}$/')
+        ->and(Seed::fromString($seed->value)->theme())->toBe(Theme::Chinitsu)
+        ->and(Seed::themed(Theme::Free)->theme())->toBeNull()
+        ->and(Seed::fromString('libre-abcd2345')->theme())->toBeNull()
+        ->and(Seed::fromString('defi-2026-11-13')->theme())->toBeNull()
+        ->and(Seed::fromString('tenpai')->theme())->toBeNull();
+});
+
+it('tire pour chaque thème une main qui contient le yaku visé', function (Theme $theme) {
+    for ($i = 0; $i < 25; $i++) {
+        $generated = generate(sprintf('%s-test%04d', $theme->value, $i));
+        $yaku = array_map(fn ($yakuHan) => $yakuHan->yaku, Evaluator::evaluate($generated->hand, Rules::default())->yaku());
+
+        expect($generated->theme)->toBe($theme)
+            ->and(array_intersect(array_map(fn ($y) => $y->value, $theme->targets()), array_map(fn ($y) => $y->value, $yaku)))
+            ->not->toBeEmpty("Graine {$theme->value}-test{$i} : aucun yaku du thème.");
+    }
+})->with(fn () => array_map(fn (Theme $theme) => [$theme], Theme::trainable()));

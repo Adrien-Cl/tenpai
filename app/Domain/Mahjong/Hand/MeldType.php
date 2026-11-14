@@ -2,6 +2,8 @@
 
 namespace App\Domain\Mahjong\Hand;
 
+use App\Domain\Mahjong\Text;
+
 enum MeldType: string
 {
     case Chi = 'chi';
@@ -11,12 +13,12 @@ enum MeldType: string
 
     public function label(): string
     {
-        return match ($this) {
+        return Text::get(match ($this) {
             self::Chi => 'chi',
             self::Pon => 'pon',
             self::OpenKan => 'kan ouvert',
             self::ClosedKan => 'kan fermé',
-        };
+        });
     }
 
     public function groupKind(): GroupKind

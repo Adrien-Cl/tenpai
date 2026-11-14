@@ -27,12 +27,12 @@ final class PointsStep implements Step
 
     public function title(): string
     {
-        return 'Combien rapporte la main ?';
+        return __('Combien rapporte la main ?');
     }
 
     public function help(): string
     {
-        return 'Sans honba ni bâton de riichi. Chaque paiement est arrondi à la centaine supérieure.';
+        return __('Sans honba ni bâton de riichi. Chaque paiement est arrondi à la centaine supérieure.');
     }
 
     public function scoringTab(): string
@@ -50,16 +50,16 @@ final class PointsStep implements Step
         $evaluation = $hand->evaluation;
 
         if (! $hand->hand()->tsumo) {
-            return ['ron' => ['label' => 'Points reçus', 'sub' => 'ron, '.($evaluation->dealer ? 'donneur' : 'non-donneur')]];
+            return ['ron' => ['label' => __('Points reçus'), 'sub' => $evaluation->dealer ? __('ron, donneur') : __('ron, non-donneur')]];
         }
 
         if ($evaluation->dealer) {
-            return ['each' => ['label' => 'Paiement de chaque adversaire', 'sub' => 'tsumo du donneur']];
+            return ['each' => ['label' => __('Paiement de chaque adversaire'), 'sub' => __('tsumo du donneur')]];
         }
 
         return [
-            'fromDealer' => ['label' => 'Paiement du donneur', 'sub' => 'tsumo'],
-            'fromOthers' => ['label' => 'Paiement de chaque non-donneur', 'sub' => 'tsumo'],
+            'fromDealer' => ['label' => __('Paiement du donneur'), 'sub' => 'tsumo'],
+            'fromOthers' => ['label' => __('Paiement de chaque non-donneur'), 'sub' => 'tsumo'],
         ];
     }
 
@@ -70,7 +70,7 @@ final class PointsStep implements Step
      */
     public static function limits(): array
     {
-        $limits = ['none' => 'Aucune'];
+        $limits = ['none' => __('Aucune')];
 
         foreach (Limit::cases() as $limit) {
             $limits[$limit->value] = $limit->label();
@@ -87,8 +87,8 @@ final class PointsStep implements Step
         $payment = $hand->evaluation->payment();
 
         return match (true) {
-            ! $hand->hand()->tsumo => Format::points((int) $payment->ron).' points',
-            $hand->evaluation->dealer => Format::points((int) $payment->each).' chacun ('.Format::points($payment->total).')',
+            ! $hand->hand()->tsumo => __(':points points', ['points' => Format::points((int) $payment->ron)]),
+            $hand->evaluation->dealer => __(':each chacun (:total)', ['each' => Format::points((int) $payment->each), 'total' => Format::points($payment->total)]),
             default => Format::points((int) $payment->fromOthers).' / '.Format::points((int) $payment->fromDealer).' ('.Format::points($payment->total).')',
         };
     }

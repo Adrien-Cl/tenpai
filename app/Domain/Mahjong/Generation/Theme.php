@@ -2,6 +2,9 @@
 
 namespace App\Domain\Mahjong\Generation;
 
+use App\Domain\Mahjong\Text;
+use App\Domain\Mahjong\Yaku;
+
 /**
  * Le thème oriente le tirage vers un yaku, pour varier les mains.
  */
@@ -40,6 +43,53 @@ enum Theme: string
             self::Shousangen => 0.5,
             self::Honroutou, self::Doukou => 0.3,
         };
+    }
+
+    /**
+     * Les yaku visés : une main tirée pour ce thème en contient au moins un. Aucun pour la main libre.
+     *
+     * @return list<Yaku>
+     */
+    public function targets(): array
+    {
+        return match ($this) {
+            self::Free => [],
+            self::Yakuhai => [Yaku::Haku, Yaku::Hatsu, Yaku::Chun, Yaku::SeatWind, Yaku::RoundWind],
+            self::Doukou => [Yaku::SanshokuDoukou],
+            default => [Yaku::from($this->value)],
+        };
+    }
+
+    public function label(): string
+    {
+        return match ($this) {
+            self::Free => Text::get('Main libre'),
+            self::Yakuhai => 'Yakuhai',
+            default => $this->targets()[0]->label(),
+        };
+    }
+
+    public function gloss(): string
+    {
+        return match ($this) {
+            self::Free => Text::get('tous les yaku'),
+            self::Yakuhai => Text::get('dragons et vents'),
+            default => $this->targets()[0]->gloss(),
+        };
+    }
+
+    /**
+     * Les thèmes que l'on peut choisir pour s'entraîner, dans l'ordre du barème.
+     *
+     * @return list<self>
+     */
+    public static function trainable(): array
+    {
+        return [
+            self::Tanyao, self::Pinfu, self::Yakuhai, self::Iipeikou, self::Chiitoitsu, self::Toitoi,
+            self::Sanankou, self::Sanshoku, self::Doukou, self::Ittsu, self::Chanta, self::Honroutou,
+            self::Shousangen, self::Ryanpeikou, self::Junchan, self::Honitsu, self::Chinitsu,
+        ];
     }
 
     public static function pick(SeededRandom $random): self

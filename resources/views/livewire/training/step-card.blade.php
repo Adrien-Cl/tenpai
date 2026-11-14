@@ -9,7 +9,7 @@
     <header class="flex gap-4 px-5 pt-6 sm:gap-5 sm:px-8 sm:pt-8">
         <span class="step-tile hidden h-14 w-11 shrink-0 sm:grid"><x-glyph :char="$kanji" class="size-6" /></span>
         <div @class(['min-w-0 flex-1', 'pr-20 sm:pr-24' => $result])>
-            <p class="text-sm text-ink-muted">Étape {{ $view + 1 }} sur 5{{ $review ? ' · relecture' : '' }}</p>
+            <p class="text-sm text-ink-muted">{{ __('Étape :step sur 5', ['step' => $view + 1]) }}{{ $review ? ' · '.__('relecture') : '' }}</p>
             <h2 id="step-title" class="display mt-0.5 text-2xl sm:text-[1.9rem]">{{ $s->title() }}</h2>
             <p class="mt-2 max-w-[62ch] text-ink-muted">{{ $s->help() }}</p>
         </div>
@@ -25,20 +25,20 @@
 
         <footer class="sticky bottom-0 z-10 flex items-center gap-2 rounded-b-[0.875rem] border-t border-paper-line bg-paper/95 px-4 py-3 backdrop-blur sm:gap-3 sm:px-8 sm:py-4">
             @if (! $result)
-                <button type="submit" class="btn btn-primary" wire:loading.attr="disabled">Valider</button>
-                <button type="button" class="btn btn-quiet px-3 sm:px-[1.15rem]" wire:click="reveal" wire:loading.attr="disabled">Voir la réponse</button>
-                <span class="hidden text-sm text-ink-muted md:inline">Entrée pour valider</span>
+                <button type="submit" class="btn btn-primary" wire:loading.attr="disabled">{{ __('Valider') }}</button>
+                <button type="button" class="btn btn-quiet px-3 sm:px-[1.15rem]" wire:click="reveal" wire:loading.attr="disabled">{{ __('Voir la réponse') }}</button>
+                <span class="hidden text-sm text-ink-muted md:inline">{{ __('Entrée pour valider') }}</span>
             @elseif ($review || $step >= \App\Livewire\Training::RECAP)
                 <button type="button" class="btn btn-quiet" wire:click="show({{ $step }})">
-                    {{ $step >= \App\Livewire\Training::RECAP ? 'Revenir au récapitulatif' : 'Revenir à l’étape en cours' }}
+                    {{ $step >= \App\Livewire\Training::RECAP ? __('Revenir au récapitulatif') : __('Revenir à l’étape en cours') }}
                 </button>
             @else
                 <button type="button" class="btn btn-primary" wire:click="next" x-init="$el.focus({ preventScroll: true })">
-                    {{ $view === 4 ? 'Voir le récapitulatif' : 'Étape suivante' }}
+                    {{ $view === 4 ? __('Voir le récapitulatif') : __('Étape suivante') }}
                 </button>
             @endif
             <button type="button" class="btn ml-auto px-2 text-ink-muted hover:text-ink sm:px-3" data-shortcut="b" x-on:click="openScoring('{{ $s->scoringTab() }}')">
-                Barème <kbd class="hidden rounded border border-paper-line px-1.5 text-xs font-normal sm:inline">B</kbd>
+                {{ __('Barème') }} <kbd class="hidden rounded border border-paper-line px-1.5 text-xs font-normal sm:inline">B</kbd>
             </button>
         </footer>
     </form>

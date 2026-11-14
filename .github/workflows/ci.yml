@@ -17,7 +17,7 @@ permissions:
 env:
   PHP_DEFAULT: '8.5'
   NODE_VERSION: '22'
-  PHP_EXTENSIONS: mbstring, intl, bcmath, pdo_sqlite, sqlite3
+  PHP_EXTENSIONS: mbstring, intl, bcmath, pdo_sqlite, sqlite3, gd, sockets
   COMPOSER_FLAGS: --no-interaction --prefer-dist --no-progress
 
 jobs:
@@ -55,7 +55,7 @@ jobs:
         run: vendor/bin/pint --test --format=checkstyle | cs2pr
 
   assets:
-    name: Build front (Vite)
+    name: Front (Vitest et build Vite)
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
@@ -70,6 +70,9 @@ jobs:
 
       - name: Installer les dépendances JS
         run: npm ci
+
+      - name: Tests JS (Vitest)
+        run: npm test
 
       - name: Compiler les assets
         run: npm run build
@@ -125,7 +128,64 @@ jobs:
           php artisan key:generate --ansi
 
       - name: Lancer les tests (Pest)
-        run: php artisan test --compact
+        run: php artisan test --compact --exclude-testsuite=Browser
+
+  browser:
+    name: Tests navigateur (Pest + Playwright)
+    needs: assets
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - uses: shivammathur/setup-php@eb7c497e18156a6bbabfef1d3a82760b9eda3962 # 2.40.0
+        with:
+          php-version: ${{ env.PHP_DEFAULT }}
+          extensions: ${{ env.PHP_EXTENSIONS }}
+          coverage: none
+
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+
+      - name: Cache Composer
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: ~/.composer/cache/files
+          key: composer-${{ runner.os }}-${{ env.PHP_DEFAULT }}-${{ hashFiles('composer.lock') }}
+          restore-keys: composer-${{ runner.os }}-${{ env.PHP_DEFAULT }}-
+
+      - name: Installer les dépendances
+        run: |
+          composer install ${{ env.COMPOSER_FLAGS }}
+          npm ci
+          npx playwright install --with-deps chromium
+
+      - name: Récupérer le build Vite
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          name: vite-build
+          path: public/build
+
+      - name: Préparer l'environnement
+        run: |
+          cp .env.example .env
+          php artisan key:generate --ansi
+
+      - name: Lancer les tests navigateur
+        run: php artisan test --compact --testsuite=Browser
+
+      - name: Garder les captures des échecs
+        if: failure()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: browser-screenshots
+          path: tests/Browser/Screenshots
+          retention-days: 7
+          if-no-files-found: ignore
 
   security:
     name: Audit de sécurité

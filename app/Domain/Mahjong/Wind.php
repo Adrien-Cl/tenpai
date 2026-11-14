@@ -16,12 +16,12 @@ enum Wind: int
 
     public function label(): string
     {
-        return match ($this) {
+        return Text::get(match ($this) {
             self::East => 'Est',
             self::South => 'Sud',
             self::West => 'Ouest',
             self::North => 'Nord',
-        };
+        });
     }
 
     public function kanji(): string

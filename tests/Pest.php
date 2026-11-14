@@ -12,12 +12,13 @@ use Tests\TestCase;
 | Cas de test
 |--------------------------------------------------------------------------
 |
-| Seuls les tests « Feature » démarrent Laravel. Les tests du moteur (Unit)
-| tournent sur des classes PHP pures.
+| Seuls les tests « Feature » et « Browser » démarrent Laravel. Les tests du
+| moteur (Unit) tournent sur des classes PHP pures. Les tests « Browser »
+| pilotent un vrai navigateur (Playwright) : Livewire, Alpine et le store.
 |
 */
 
-pest()->extend(TestCase::class)->in('Feature');
+pest()->extend(TestCase::class)->in('Feature', 'Browser');
 
 /*
 |--------------------------------------------------------------------------

@@ -1,7 +1,9 @@
 import { prepare, suggest, notYakuHint } from './yaku-search';
+import { pageLocale, t } from './text';
 
 const STEP_KEYS = ['yaku', 'han', 'dora', 'fu', 'points'];
-const emptyProgress = () => ({ hands: 0, perfect: 0, streak: 0, best: 0, steps: {}, seen: [] });
+const emptyProgress = () => ({ hands: 0, perfect: 0, streak: 0, best: 0, steps: {}, seen: [], missedYaku: {} });
+const REVIEW_SIZE = 20;
 
 document.addEventListener('alpine:init', () => {
     const Alpine = window.Alpine;
@@ -12,9 +14,31 @@ document.addEventListener('alpine:init', () => {
     Alpine.store('progress', {
         data: Alpine.$persist(emptyProgress()).as('tenpai-progres'),
         daily: Alpine.$persist({}).as('tenpai-defis'),
+        drills: Alpine.$persist({}).as('tenpai-exercices'),
+        review: Alpine.$persist([]).as('tenpai-a-revoir'),
 
         get hasPlayed() {
-            return this.data.hands > 0;
+            return this.data.hands > 0 || Object.keys(this.drills).length > 0;
+        },
+
+        /**
+         * Les mains à revoir, la plus récente d'abord.
+         */
+        get toReview() {
+            return [...this.review].reverse();
+        },
+
+        /**
+         * Les yaku le plus souvent oubliés : [id, nombre], du plus oublié au moins oublié.
+         */
+        mostMissed(limit = 5) {
+            return Object.entries(this.data.missedYaku ?? {})
+                .sort((a, b) => b[1] - a[1])
+                .slice(0, limit);
+        },
+
+        drillResult(drill) {
+            return this.drills[drill] ?? null;
         },
 
         rate(key) {
@@ -26,11 +50,30 @@ document.addEventListener('alpine:init', () => {
             return this.daily[date] ?? null;
         },
 
-        record({ seed, results, daily }) {
+        record({ seed, results, daily, drill = null, first = 0, missed = [] }) {
             const data = this.data;
-            if (data.seen.includes(seed)) return;
+            const key = drill ? `${drill}:${seed}` : seed;
 
-            data.seen = [...data.seen, seed].slice(-60);
+            // Une main à revoir, refaite sans faute, quitte la liste (même déjà comptée).
+            if (!drill && STEP_KEYS.every((_, i) => results[i])) {
+                this.review = this.review.filter((entry) => entry.seed !== seed);
+            }
+
+            if (data.seen.includes(key)) return;
+
+            data.seen = [...data.seen, key].slice(-60);
+
+            // Exercice court : compté à part, sans toucher aux statistiques des mains complètes.
+            if (drill) {
+                const played = STEP_KEYS.slice(first).map((_, i) => !!results[first + i]);
+                const previous = this.drills[drill] ?? { hands: 0, perfect: 0 };
+                this.drills = {
+                    ...this.drills,
+                    [drill]: { hands: previous.hands + 1, perfect: previous.perfect + (played.every(Boolean) ? 1 : 0) },
+                };
+                return;
+            }
+
             data.hands++;
 
             const flags = STEP_KEYS.map((_, i) => !!results[i]);
@@ -42,6 +85,14 @@ document.addEventListener('alpine:init', () => {
                 data.best = Math.max(data.best, data.streak);
             } else {
                 data.streak = 0;
+                const entry = { seed, score: flags.filter(Boolean).length };
+                this.review = [...this.review.filter((e) => e.seed !== seed), entry].slice(-REVIEW_SIZE);
+            }
+
+            if (missed.length) {
+                const counts = { ...(data.missedYaku ?? {}) };
+                missed.forEach((id) => (counts[id] = (counts[id] ?? 0) + 1));
+                data.missedYaku = counts;
             }
 
             STEP_KEYS.forEach((key, i) => {
@@ -50,13 +101,100 @@ document.addEventListener('alpine:init', () => {
             });
 
             if (daily && !this.daily[daily]) {
-                this.daily = { ...this.daily, [daily]: { score: flags.filter(Boolean).length, perfect } };
+                this.daily = { ...this.daily, [daily]: { score: flags.filter(Boolean).length, perfect, steps: flags } };
+            }
+        },
+
+        /**
+         * Le résultat d'un défi, à coller dans une conversation. Les anciens résultats n'ont pas le détail des étapes.
+         */
+        shareText(date) {
+            const result = this.daily[date];
+            if (!result) return null;
+
+            const day = new Date(`${date}T12:00:00`).toLocaleDateString(pageLocale(), { day: 'numeric', month: 'long' });
+            const row = Array.isArray(result.steps) ? `${result.steps.map((ok) => (ok ? '🟩' : '🟥')).join('')} ` : '';
+
+            return `${t('Tenpai · défi du :day', { day })}\n${row}${result.score}/5${result.perfect ? t(', sans faute') : ''}`;
+        },
+
+        /**
+         * Partage (mobile) ou copie (ordinateur) le résultat du défi. Renvoie vrai si le texte est parti.
+         */
+        async shareDaily(date, url) {
+            const text = this.shareText(date);
+            if (!text) return false;
+
+            if (navigator.share && matchMedia('(pointer: coarse)').matches) {
+                try {
+                    await navigator.share({ title: 'Tenpai', text, url });
+                    return true;
+                } catch (e) {
+                    return false;
+                }
+            }
+
+            try {
+                await navigator.clipboard.writeText(`${text}\n${url}`);
+                return true;
+            } catch (e) {
+                return false;
             }
         },
 
         reset() {
             this.data = emptyProgress();
+            this.drills = {};
+            this.review = [];
         },
+    });
+
+    /**
+     * Calendrier des défis : les cinq dernières semaines, du lundi au dimanche, et la série en cours.
+     * Les dates sont calculées en UTC à partir du jour donné par le serveur (heure de Paris).
+     */
+    Alpine.data('dailyCalendar', ({ today, url }) => {
+        const shift = (date, days) => {
+            const d = new Date(`${date}T00:00:00Z`);
+            d.setUTCDate(d.getUTCDate() + days);
+            return d.toISOString().slice(0, 10);
+        };
+        const weekday = (new Date(`${today}T00:00:00Z`).getUTCDay() + 6) % 7;
+        const start = shift(today, -weekday - 28);
+
+        return {
+            weekdays: t('L M M J V S D').split(' '),
+
+            get days() {
+                const daily = Alpine.store('progress').daily;
+                return Array.from({ length: 35 }, (_, i) => {
+                    const date = shift(start, i);
+                    const result = daily[date] ?? null;
+                    return {
+                        date,
+                        day: Number(date.slice(8)),
+                        future: date > today,
+                        today: date === today,
+                        result,
+                        url: url.replace('DATE', date),
+                        label: new Date(`${date}T12:00:00Z`).toLocaleDateString(pageLocale(), { weekday: 'long', day: 'numeric', month: 'long', timeZone: 'UTC' })
+                            + (result ? ` : ${result.score}/5${result.perfect ? t(', sans faute') : ''}` : t(' : pas joué')),
+                    };
+                });
+            },
+
+            // Jours d'affilée jusqu'à aujourd'hui ; un défi pas encore fait aujourd'hui ne casse pas la série.
+            get streak() {
+                const daily = Alpine.store('progress').daily;
+                let date = daily[today] ? today : shift(today, -1);
+                let count = 0;
+                while (daily[date]) {
+                    count++;
+                    date = shift(date, -1);
+                }
+                return count;
+            },
+        };
     });
 
     /**
@@ -105,13 +243,13 @@ document.addEventListener('alpine:init', () => {
         },
 
         get caption() {
-            if (!this.tsumo) return this.dealer ? 'Ron du donneur' : 'Ron d’un non-donneur';
-            return this.dealer ? 'Tsumo du donneur : chaque adversaire paie' : 'Tsumo : chaque non-donneur / le donneur';
+            if (!this.tsumo) return this.dealer ? t('Ron du donneur') : t('Ron d’un non-donneur');
+            return this.dealer ? t('Tsumo du donneur : chaque adversaire paie') : t('Tsumo : chaque non-donneur / le donneur');
         },
 
         get impossible() {
-            if (this.fu === 20) return this.tsumo ? '20 fu en tsumo, c’est un pinfu : 2 han au moins (pinfu et tsumo).' : '20 fu n’existe pas en ron : un pinfu en ron vaut 30 fu.';
-            return this.tsumo ? '25 fu, c’est un chiitoitsu : en tsumo, 3 han au moins.' : '25 fu, c’est un chiitoitsu : 2 han au moins.';
+            if (this.fu === 20) return this.tsumo ? t('20 fu en tsumo, c’est un pinfu : 2 han au moins (pinfu et tsumo).') : t('20 fu n’existe pas en ron : un pinfu en ron vaut 30 fu.');
+            return this.tsumo ? t('25 fu, c’est un chiitoitsu : en tsumo, 3 han au moins.') : t('25 fu, c’est un chiitoitsu : 2 han au moins.');
         },
     }));
 
@@ -132,7 +270,8 @@ document.addEventListener('alpine:init', () => {
             const note = notYakuHint(this.query);
             if (note) return note;
             const count = this.matches.length;
-            return count ? `${count} yaku trouvé${count > 1 ? 's' : ''}.` : `Aucun yaku ne correspond à « ${this.query.trim()} ».`;
+            if (!count) return t('Aucun yaku ne correspond à « :query ».', { query: this.query.trim() });
+            return count > 1 ? t(':count yaku trouvés.', { count }) : t(':count yaku trouvé.', { count });
         },
 
         visible(id) {
@@ -158,8 +297,17 @@ document.addEventListener('alpine:init', () => {
         locked,
 
         init() {
-            this.$watch('query', () => this.refresh());
+            this.$watch('query', (value) => {
+                // La saisie vidée par add() ne doit pas effacer l'annonce « Riichi ajouté. ».
+                if (!value && this.confirming) {
+                    this.confirming = false;
+                    return;
+                }
+                this.refresh();
+            });
         },
+
+        confirming: false,
 
         entry(id) {
             return this.entries.find((entry) => entry.id === id);
@@ -183,9 +331,9 @@ document.addEventListener('alpine:init', () => {
             this.hint = note
                 ? note
                 : already
-                  ? 'Ce yaku est déjà dans votre liste.'
+                  ? t('Ce yaku est déjà dans votre liste.')
                   : this.query.trim() && !this.options.length
-                    ? `Aucun yaku ne correspond à « ${this.query.trim()} ».`
+                    ? t('Aucun yaku ne correspond à « :query ».', { query: this.query.trim() })
                     : '';
         },
 
@@ -198,17 +346,18 @@ document.addEventListener('alpine:init', () => {
         add(id, refocus = true) {
             if (this.locked || this.picked.includes(id)) return;
             this.picked = [...this.picked, id];
+            this.confirming = this.query !== '';
             this.query = '';
             this.options = [];
             this.active = -1;
-            this.hint = `${this.entry(id).label} ajouté.`;
+            this.hint = t(':yaku ajouté.', { yaku: this.entry(id).label });
             if (refocus) this.$nextTick(() => this.$refs.input?.focus());
         },
 
         remove(id) {
             if (this.locked) return;
             this.picked = this.picked.filter((x) => x !== id);
-            this.hint = `${this.entry(id).label} retiré.`;
+            this.hint = t(':yaku retiré.', { yaku: this.entry(id).label });
         },
 
         close() {
@@ -241,6 +390,11 @@ document.addEventListener('alpine:init', () => {
         },
     }));
 });
+
+// Service worker : l'application s'installe, et le barème reste lisible hors ligne.
+if ('serviceWorker' in navigator && window.isSecureContext) {
+    window.addEventListener('load', () => navigator.serviceWorker.register('/sw.js').catch(() => {}));
+}
 
 // Raccourcis clavier : B ouvre le barème, N passe à la main suivante (quand la main est finie).
 document.addEventListener('keydown', (event) => {

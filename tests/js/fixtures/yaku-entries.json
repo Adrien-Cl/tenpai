@@ -1,0 +1,515 @@
+[
+    {
+        "id": "riichi",
+        "label": "Riichi",
+        "name": "Riichi",
+        "gloss": "déclaration",
+        "description": "Main fermée et riichi déclaré.",
+        "aliases": [
+            "reach"
+        ],
+        "yakuman": false,
+        "han": 1
+    },
+    {
+        "id": "driichi",
+        "label": "Double riichi",
+        "name": "Double riichi",
+        "gloss": "riichi au premier tour",
+        "description": "Riichi déclaré dès votre première défausse, sans aucun appel avant. Remplace riichi.",
+        "aliases": [
+            "daburu riichi",
+            "double reach",
+            "w riichi"
+        ],
+        "yakuman": false,
+        "han": 2
+    },
+    {
+        "id": "ippatsu",
+        "label": "Ippatsu",
+        "name": "Ippatsu",
+        "gloss": "coup immédiat",
+        "description": "Victoire avant votre prochaine défausse après le riichi, sans appel entre-temps.",
+        "aliases": [],
+        "yakuman": false,
+        "han": 1
+    },
+    {
+        "id": "tsumo",
+        "label": "Menzen tsumo",
+        "name": "Menzen tsumo",
+        "gloss": "pioche main fermée",
+        "description": "Victoire sur votre propre pioche avec une main fermée (les kan fermés ne l’ouvrent pas).",
+        "aliases": [
+            "menzen tsumo",
+            "mentsumo",
+            "menzenchin tsumohou"
+        ],
+        "yakuman": false,
+        "han": 1
+    },
+    {
+        "id": "haitei",
+        "label": "Haitei",
+        "name": "Haitei",
+        "gloss": "dernière pioche",
+        "description": "Tsumo sur la dernière tuile du mur.",
+        "aliases": [
+            "haitei raoyue"
+        ],
+        "yakuman": false,
+        "han": 1
+    },
+    {
+        "id": "houtei",
+        "label": "Houtei",
+        "name": "Houtei",
+        "gloss": "dernière défausse",
+        "description": "Ron sur la toute dernière défausse.",
+        "aliases": [
+            "houtei raoyui",
+            "hotei"
+        ],
+        "yakuman": false,
+        "han": 1
+    },
+    {
+        "id": "rinshan",
+        "label": "Rinshan kaihou",
+        "name": "Rinshan kaihou",
+        "gloss": "tuile de remplacement",
+        "description": "Victoire sur la tuile piochée après un kan.",
+        "aliases": [
+            "rinshan kaihou"
+        ],
+        "yakuman": false,
+        "han": 1
+    },
+    {
+        "id": "chankan",
+        "label": "Chankan",
+        "name": "Chankan",
+        "gloss": "vol du kan",
+        "description": "Ron sur la tuile qu’un adversaire ajoute à son pon pour en faire un kan.",
+        "aliases": [],
+        "yakuman": false,
+        "han": 1
+    },
+    {
+        "id": "pinfu",
+        "label": "Pinfu",
+        "name": "Pinfu",
+        "gloss": "main sans points",
+        "description": "Main fermée, quatre suites, paire sans valeur et attente ryanmen.",
+        "aliases": [],
+        "yakuman": false,
+        "han": 1
+    },
+    {
+        "id": "tanyao",
+        "label": "Tanyao",
+        "name": "Tanyao",
+        "gloss": "tout simples",
+        "description": "Uniquement des tuiles de 2 à 8, aucun honneur ni terminale.",
+        "aliases": [
+            "kuitan",
+            "tanyaochuu",
+            "all simples"
+        ],
+        "yakuman": false,
+        "han": 1
+    },
+    {
+        "id": "iipeikou",
+        "label": "Iipeikou",
+        "name": "Iipeikou",
+        "gloss": "double suite",
+        "description": "Deux suites identiques dans la même famille, main fermée.",
+        "aliases": [
+            "ipeiko",
+            "iipeiko"
+        ],
+        "yakuman": false,
+        "han": 1
+    },
+    {
+        "id": "ryanpeikou",
+        "label": "Ryanpeikou",
+        "name": "Ryanpeikou",
+        "gloss": "deux doubles suites",
+        "description": "Deux fois deux suites identiques, main fermée. Remplace iipeikou.",
+        "aliases": [
+            "ryanpeiko"
+        ],
+        "yakuman": false,
+        "han": 3
+    },
+    {
+        "id": "chiitoi",
+        "label": "Chiitoitsu",
+        "name": "Chiitoitsu",
+        "gloss": "sept paires",
+        "description": "Sept paires toutes différentes. Toujours 25 fu.",
+        "aliases": [
+            "chiitoitsu",
+            "chitoitsu",
+            "seven pairs",
+            "7 paires"
+        ],
+        "yakuman": false,
+        "han": 2
+    },
+    {
+        "id": "toitoi",
+        "label": "Toitoi",
+        "name": "Toitoi",
+        "gloss": "tout brelans",
+        "description": "Quatre brelans ou carrés.",
+        "aliases": [
+            "toitoihou",
+            "all pons"
+        ],
+        "yakuman": false,
+        "han": 2
+    },
+    {
+        "id": "sanankou",
+        "label": "Sanankou",
+        "name": "Sanankou",
+        "gloss": "trois brelans cachés",
+        "description": "Trois brelans ou carrés fermés. Un brelan complété par ron ne compte pas comme caché.",
+        "aliases": [
+            "san ankou"
+        ],
+        "yakuman": false,
+        "han": 2
+    },
+    {
+        "id": "sankantsu",
+        "label": "Sankantsu",
+        "name": "Sankantsu",
+        "gloss": "trois carrés",
+        "description": "Trois kan, ouverts ou fermés.",
+        "aliases": [
+            "san kantsu"
+        ],
+        "yakuman": false,
+        "han": 2
+    },
+    {
+        "id": "sanshoku",
+        "label": "Sanshoku doujun",
+        "name": "Sanshoku doujun",
+        "gloss": "suite tricolore",
+        "description": "La même suite dans les trois familles.",
+        "aliases": [
+            "sanshoku doujun"
+        ],
+        "yakuman": false,
+        "han": 2
+    },
+    {
+        "id": "doukou",
+        "label": "Sanshoku doukou",
+        "name": "Sanshoku doukou",
+        "gloss": "brelan tricolore",
+        "description": "Le même brelan dans les trois familles.",
+        "aliases": [
+            "sanshoku doukou"
+        ],
+        "yakuman": false,
+        "han": 2
+    },
+    {
+        "id": "ittsu",
+        "label": "Ittsu",
+        "name": "Ittsu",
+        "gloss": "grande suite",
+        "description": "1-2-3, 4-5-6 et 7-8-9 dans la même famille.",
+        "aliases": [
+            "ikkitsuukan",
+            "ikki tsuukan",
+            "itsu",
+            "pure straight"
+        ],
+        "yakuman": false,
+        "han": 2
+    },
+    {
+        "id": "chanta",
+        "label": "Chanta",
+        "name": "Chanta",
+        "gloss": "terminales et honneurs partout",
+        "description": "Chaque groupe et la paire contiennent une terminale ou un honneur, avec au moins une suite.",
+        "aliases": [
+            "chantaiyao"
+        ],
+        "yakuman": false,
+        "han": 2
+    },
+    {
+        "id": "junchan",
+        "label": "Junchan",
+        "name": "Junchan",
+        "gloss": "terminales partout",
+        "description": "Chaque groupe et la paire contiennent un 1 ou un 9, sans honneur, avec au moins une suite.",
+        "aliases": [
+            "junchantaiyao"
+        ],
+        "yakuman": false,
+        "han": 3
+    },
+    {
+        "id": "honroutou",
+        "label": "Honroutou",
+        "name": "Honroutou",
+        "gloss": "terminales et honneurs",
+        "description": "Uniquement des terminales et des honneurs.",
+        "aliases": [],
+        "yakuman": false,
+        "han": 2
+    },
+    {
+        "id": "haku",
+        "label": "Haku",
+        "name": "Yakuhai : Haku",
+        "gloss": "dragon blanc",
+        "description": "Brelan ou carré de dragons blancs.",
+        "aliases": [
+            "yakuhai",
+            "dragon blanc"
+        ],
+        "yakuman": false,
+        "han": 1
+    },
+    {
+        "id": "hatsu",
+        "label": "Hatsu",
+        "name": "Yakuhai : Hatsu",
+        "gloss": "dragon vert",
+        "description": "Brelan ou carré de dragons verts.",
+        "aliases": [
+            "yakuhai",
+            "dragon vert"
+        ],
+        "yakuman": false,
+        "han": 1
+    },
+    {
+        "id": "chun",
+        "label": "Chun",
+        "name": "Yakuhai : Chun",
+        "gloss": "dragon rouge",
+        "description": "Brelan ou carré de dragons rouges.",
+        "aliases": [
+            "yakuhai",
+            "dragon rouge"
+        ],
+        "yakuman": false,
+        "han": 1
+    },
+    {
+        "id": "jikaze",
+        "label": "Vent du siège",
+        "name": "Yakuhai : vent du siège",
+        "gloss": "jikaze",
+        "description": "Brelan ou carré de votre propre vent.",
+        "aliases": [
+            "yakuhai",
+            "vent",
+            "seat wind"
+        ],
+        "yakuman": false,
+        "han": 1
+    },
+    {
+        "id": "bakaze",
+        "label": "Vent de la manche",
+        "name": "Yakuhai : vent de la manche",
+        "gloss": "bakaze",
+        "description": "Brelan ou carré du vent de la manche.",
+        "aliases": [
+            "yakuhai",
+            "vent",
+            "round wind",
+            "prevalent wind"
+        ],
+        "yakuman": false,
+        "han": 1
+    },
+    {
+        "id": "shousangen",
+        "label": "Shousangen",
+        "name": "Shousangen",
+        "gloss": "petits trois dragons",
+        "description": "Deux brelans de dragons et une paire du troisième. Les deux yakuhai s’ajoutent.",
+        "aliases": [],
+        "yakuman": false,
+        "han": 2
+    },
+    {
+        "id": "honitsu",
+        "label": "Honitsu",
+        "name": "Honitsu",
+        "gloss": "semi-pur",
+        "description": "Une seule famille plus des honneurs.",
+        "aliases": [
+            "honiisou",
+            "half flush"
+        ],
+        "yakuman": false,
+        "han": 3
+    },
+    {
+        "id": "chinitsu",
+        "label": "Chinitsu",
+        "name": "Chinitsu",
+        "gloss": "pur",
+        "description": "Une seule famille, aucun honneur.",
+        "aliases": [
+            "chiniisou",
+            "full flush"
+        ],
+        "yakuman": false,
+        "han": 6
+    },
+    {
+        "id": "kokushi",
+        "label": "Kokushi musou",
+        "name": "Kokushi musou",
+        "gloss": "treize orphelins",
+        "description": "Une de chaque terminale et de chaque honneur, plus un double de l’une d’elles.",
+        "aliases": [
+            "kokushi musou",
+            "thirteen orphans"
+        ],
+        "yakuman": true,
+        "han": 13
+    },
+    {
+        "id": "suuankou",
+        "label": "Suuankou",
+        "name": "Suuankou",
+        "gloss": "quatre brelans cachés",
+        "description": "Quatre brelans ou carrés fermés, main fermée.",
+        "aliases": [
+            "suu ankou"
+        ],
+        "yakuman": true,
+        "han": 13
+    },
+    {
+        "id": "daisangen",
+        "label": "Daisangen",
+        "name": "Daisangen",
+        "gloss": "grands trois dragons",
+        "description": "Trois brelans de dragons.",
+        "aliases": [],
+        "yakuman": true,
+        "han": 13
+    },
+    {
+        "id": "shousuushii",
+        "label": "Shousuushii",
+        "name": "Shousuushii",
+        "gloss": "petits quatre vents",
+        "description": "Trois brelans de vents et une paire du quatrième.",
+        "aliases": [
+            "shousuushi"
+        ],
+        "yakuman": true,
+        "han": 13
+    },
+    {
+        "id": "daisuushii",
+        "label": "Daisuushii",
+        "name": "Daisuushii",
+        "gloss": "grands quatre vents",
+        "description": "Quatre brelans de vents.",
+        "aliases": [
+            "daisuushi"
+        ],
+        "yakuman": true,
+        "han": 13
+    },
+    {
+        "id": "tsuuiisou",
+        "label": "Tsuuiisou",
+        "name": "Tsuuiisou",
+        "gloss": "tout honneurs",
+        "description": "Uniquement des vents et des dragons.",
+        "aliases": [
+            "tsuisou"
+        ],
+        "yakuman": true,
+        "han": 13
+    },
+    {
+        "id": "chinroutou",
+        "label": "Chinroutou",
+        "name": "Chinroutou",
+        "gloss": "tout terminales",
+        "description": "Uniquement des 1 et des 9.",
+        "aliases": [],
+        "yakuman": true,
+        "han": 13
+    },
+    {
+        "id": "ryuuiisou",
+        "label": "Ryuuiisou",
+        "name": "Ryuuiisou",
+        "gloss": "tout vert",
+        "description": "Uniquement 2, 3, 4, 6, 8 de bambous et Hatsu.",
+        "aliases": [
+            "ryuisou",
+            "all green"
+        ],
+        "yakuman": true,
+        "han": 13
+    },
+    {
+        "id": "chuuren",
+        "label": "Chuuren poutou",
+        "name": "Chuuren poutou",
+        "gloss": "neuf portes",
+        "description": "1-1-1-2-3-4-5-6-7-8-9-9-9 d’une famille plus une tuile de la même famille, main fermée.",
+        "aliases": [
+            "chuuren poutou",
+            "chuuren pooto",
+            "nine gates"
+        ],
+        "yakuman": true,
+        "han": 13
+    },
+    {
+        "id": "suukantsu",
+        "label": "Suukantsu",
+        "name": "Suukantsu",
+        "gloss": "quatre carrés",
+        "description": "Quatre kan.",
+        "aliases": [],
+        "yakuman": true,
+        "han": 13
+    },
+    {
+        "id": "tenhou",
+        "label": "Tenhou",
+        "name": "Tenhou",
+        "gloss": "main du ciel",
+        "description": "Le donneur gagne sur sa main de départ.",
+        "aliases": [],
+        "yakuman": true,
+        "han": 13
+    },
+    {
+        "id": "chiihou",
+        "label": "Chiihou",
+        "name": "Chiihou",
+        "gloss": "main de la terre",
+        "description": "Un non-donneur gagne sur sa première pioche, sans appel avant.",
+        "aliases": [],
+        "yakuman": true,
+        "han": 13
+    }
+]

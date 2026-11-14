@@ -18,9 +18,9 @@
     <div class="flex items-center gap-3">
         <span class="w-14 text-right text-sm font-bold" aria-live="polite">
             @if ($state === 'ok')
-                <span class="text-lg text-ok" aria-hidden="true">◎</span><span class="sr-only">Juste</span>
+                <span class="text-lg text-ok" aria-hidden="true">◎</span><span class="sr-only">{{ __('Juste') }}</span>
             @elseif ($state === 'ko')
-                <span class="num text-ko"><span aria-hidden="true">→ </span><span class="sr-only">Réponse : </span>{{ $field['expected'] }}</span>
+                <span class="num text-ko"><span aria-hidden="true">→ </span><span class="sr-only">{{ __('Réponse :') }} </span>{{ $field['expected'] }}</span>
             @endif
         </span>
         <input id="{{ $id }}" type="number" inputmode="numeric" min="0" step="1" autocomplete="off"

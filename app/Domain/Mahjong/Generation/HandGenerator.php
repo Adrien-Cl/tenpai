@@ -11,6 +11,7 @@ use App\Domain\Mahjong\Scoring\Evaluation;
 use App\Domain\Mahjong\Scoring\Evaluator;
 use App\Domain\Mahjong\Tile;
 use App\Domain\Mahjong\Wind;
+use App\Domain\Mahjong\Yaku;
 use RuntimeException;
 
 /**
@@ -55,7 +56,7 @@ final class HandGenerator
     {
         $seat = Wind::from($random->int(4));
         $round = $random->chance(0.65) ? Wind::East : Wind::South;
-        $theme = Theme::pick($random);
+        $theme = $seed->theme() ?? Theme::pick($random);
         $used = array_fill(0, Tile::COUNT, 0);
         $closed = [];
         $melds = [];
@@ -163,7 +164,26 @@ final class HandGenerator
             return null;
         }
 
+        // Entraînement ciblé : le thème oriente le tirage, mais seul le yaku obtenu compte.
+        if ($seed->theme() !== null && ! $this->containsAny($evaluation, $theme->targets())) {
+            return null;
+        }
+
         return [new GeneratedHand($seed, $theme, $hand, $handTiles, $winTile, $meldViews), $evaluation];
+    }
+
+    /**
+     * @param  list<Yaku>  $targets
+     */
+    private function containsAny(Evaluation $evaluation, array $targets): bool
+    {
+        foreach ($evaluation->yaku() as $yakuHan) {
+            if (in_array($yakuHan->yaku, $targets, true)) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     /**

@@ -1,6 +1,8 @@
 // Recherche des yaku au fil de la frappe (portée de la référence) :
 // noms, alias (romanisations, anglais, français), glosses, et une faute de frappe tolérée.
 
+import { t } from './text';
+
 export const norm = (text) =>
     text
         .normalize('NFD')
@@ -35,15 +37,16 @@ function levenshtein(a, b) {
 export function prepare(entries) {
     return entries.map((entry, order) => {
         const names = [norm(entry.label), norm(entry.name), ...entry.aliases.map(norm)];
-        const gloss = norm(entry.gloss);
+        // La glose normalisée sert à chercher ; entry.gloss garde ses accents pour l'affichage.
+        const glossKey = norm(entry.gloss);
         return {
             ...entry,
             order,
             names,
             compacts: names.map(compact),
             words: names.flatMap((name) => name.split(' ')),
-            gloss,
-            glossWords: gloss.split(' '),
+            glossKey,
+            glossWords: glossKey.split(' '),
         };
     });
 }
@@ -52,8 +55,8 @@ export function prepare(entries) {
 function rank(entry, query, queryCompact) {
     if (entry.compacts[0].startsWith(queryCompact) || entry.compacts[1].startsWith(queryCompact)) return 0;
     if (entry.compacts.some((c) => c.startsWith(queryCompact)) || entry.words.some((w) => w.startsWith(query))) return 1;
-    if (compact(entry.gloss).startsWith(queryCompact) || entry.glossWords.some((w) => w.startsWith(query))) return 2;
-    if (queryCompact.length >= 3 && (entry.compacts.some((c) => c.includes(queryCompact)) || compact(entry.gloss).includes(queryCompact))) return 3;
+    if (compact(entry.glossKey).startsWith(queryCompact) || entry.glossWords.some((w) => w.startsWith(query))) return 2;
+    if (queryCompact.length >= 3 && (entry.compacts.some((c) => c.includes(queryCompact)) || compact(entry.glossKey).includes(queryCompact))) return 3;
     // Une faute de frappe : « richi » → riichi.
     if (queryCompact.length >= 4 && entry.compacts.some((c) => [-1, 0, 1].some((k) => levenshtein(queryCompact, c.slice(0, queryCompact.length + k)) <= 1))) return 4;
     return Infinity;
@@ -74,5 +77,5 @@ export function suggest(entries, text, exclude = []) {
 export function notYakuHint(text) {
     const q = compact(norm(text));
     const found = q && NOT_YAKU.find(([pattern]) => pattern.test(q));
-    return found ? found[1] : null;
+    return found ? t(found[1]) : null;
 }
