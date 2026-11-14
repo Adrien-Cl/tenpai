@@ -4,6 +4,7 @@ namespace App\View;
 
 use App\Domain\Mahjong\Limit;
 use App\Domain\Mahjong\Rules;
+use App\Domain\Mahjong\Scoring\Payment;
 use App\Domain\Mahjong\Scoring\PointsCalculator;
 use App\Domain\Mahjong\Wait;
 use App\Domain\Mahjong\Yaku;
@@ -44,7 +45,9 @@ final class ScoringSheet
      * Le tableau des points pour un gagnant et un mode de victoire : un chiffre par case,
      * et la zone des limites regroupée en une seule bande par ligne.
      *
-     * @return list<array{fu: int, cells: list<array{han: int, value: string|null}>, limit: array{from: int, span: int, label: string, value: string}|null}>
+     * Pour un tsumo de non-donneur, value est le paiement de chaque non-donneur et detail celui du donneur.
+     *
+     * @return list<array{fu: int, cells: list<array{han: int, value: string|null, detail: string|null}>, limit: array{from: int, span: int, label: string, value: string, detail: string|null}|null}>
      */
     public function pointGrid(bool $dealer, bool $tsumo): array
     {
@@ -56,24 +59,26 @@ final class ScoringSheet
 
             foreach ([1, 2, 3, 4] as $han) {
                 if (! self::isPossible($han, $fu, $tsumo)) {
-                    $cells[] = ['han' => $han, 'value' => null];
+                    $cells[] = ['han' => $han, 'value' => null, 'detail' => null];
 
                     continue;
                 }
 
                 $payment = PointsCalculator::points($han, $fu, $dealer, $tsumo, $this->rules);
+                [$value, $detail] = self::cellValues($payment, $dealer, $tsumo);
 
                 if ($payment->limit !== null) {
                     $limit = [
                         'from' => $han,
                         'span' => 5 - $han,
                         'label' => $payment->limit->label(),
-                        'value' => PointsFormula::short($payment, $dealer, $tsumo),
+                        'value' => $value,
+                        'detail' => $detail,
                     ];
                     break;
                 }
 
-                $cells[] = ['han' => $han, 'value' => PointsFormula::short($payment, $dealer, $tsumo)];
+                $cells[] = ['han' => $han, 'value' => $value, 'detail' => $detail];
             }
 
             if ($limit === null && array_filter($cells, fn (array $cell): bool => $cell['value'] !== null) === []) {
@@ -89,16 +94,21 @@ final class ScoringSheet
     /**
      * Les cinq limites, pour un gagnant et un mode de victoire.
      *
-     * @return list<array{label: string, condition: string, value: string, han: int}>
+     * @return list<array{label: string, condition: string, value: string, detail: string|null, han: int}>
      */
     public function limitLine(bool $dealer, bool $tsumo): array
     {
-        return array_map(fn (Limit $limit): array => [
-            'label' => $limit->label(),
-            'condition' => $limit->condition(),
-            'value' => PointsFormula::short(PointsCalculator::points($limit->minimumHan(), 30, $dealer, $tsumo, $this->rules), $dealer, $tsumo),
-            'han' => $limit->minimumHan(),
-        ], Limit::cases());
+        return array_map(function (Limit $limit) use ($dealer, $tsumo): array {
+            [$value, $detail] = self::cellValues(PointsCalculator::points($limit->minimumHan(), 30, $dealer, $tsumo, $this->rules), $dealer, $tsumo);
+
+            return [
+                'label' => $limit->label(),
+                'condition' => $limit->condition(),
+                'value' => $value,
+                'detail' => $detail,
+                'han' => $limit->minimumHan(),
+            ];
+        }, Limit::cases());
     }
 
     /**
@@ -221,6 +231,20 @@ final class ScoringSheet
         }
 
         return $entries;
+    }
+
+    /**
+     * Le chiffre d'une case, et pour un tsumo de non-donneur, le paiement du donneur en dessous.
+     *
+     * @return array{string, string|null}
+     */
+    private static function cellValues(Payment $payment, bool $dealer, bool $tsumo): array
+    {
+        return match (true) {
+            ! $tsumo => [Format::points((int) $payment->ron), null],
+            $dealer => [Format::points((int) $payment->each), null],
+            default => [Format::points((int) $payment->fromOthers), Format::points((int) $payment->fromDealer)],
+        };
     }
 
     /**

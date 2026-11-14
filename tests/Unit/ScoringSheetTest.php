@@ -31,8 +31,9 @@ it('affiche les paiements du tsumo dans le tableau', function () {
     $rows = collect((new ScoringSheet)->pointGrid(dealer: false, tsumo: true))->keyBy('fu');
     $dealerRows = collect((new ScoringSheet)->pointGrid(dealer: true, tsumo: true))->keyBy('fu');
 
-    expect($rows[20]['cells'][1]['value'])->toBe('400 / 700')
-        ->and($dealerRows[30]['cells'][2]['value'])->toBe("2\u{00A0}000");
+    expect($rows[20]['cells'][1])->toMatchArray(['value' => '400', 'detail' => '700'])
+        ->and($rows[40]['limit'])->toMatchArray(['value' => "2\u{00A0}000", 'detail' => "4\u{00A0}000"])
+        ->and($dealerRows[30]['cells'][2])->toMatchArray(['value' => "2\u{00A0}000", 'detail' => null]);
 });
 
 it('prépare les réponses du calculateur avec leur calcul', function () {

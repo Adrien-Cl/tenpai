@@ -1,58 +1,94 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+# Tenpai
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+[![CI](https://github.com/Adrien-Cl/tenpai/actions/workflows/ci.yml/badge.svg)](https://github.com/Adrien-Cl/tenpai/actions/workflows/ci.yml)
 
-## About Laravel
+**聴牌, tenpai : il ne manque plus qu'une tuile.**
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+Tenpai est un entraîneur au comptage des mains de mahjong riichi. La main est déjà gagnée ; à vous de dire combien elle vaut, en cinq étapes corrigées et expliquées, sans calculette.
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+## Fonctionnalités
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+- **Entraînement** (`/entrainement`) : une main gagnante générée aléatoirement, à compter étape par étape.
+  1. **Yaku** : repérer les yaku de la main, par leur nom.
+  2. **Han** : donner la valeur de chacun, main ouverte ou fermée.
+  3. **Dora** : compter les dora, les cinq rouges et les ura-dora.
+  4. **Fu** : décompter les fu groupe par groupe, puis arrondir.
+  5. **Points** : trouver la limite et ce que paie chaque joueur.
+- **Mains partageables** : chaque main est tirée d'une graine (`/entrainement/{graine}`). La même URL donne toujours la même main.
+- **Défi du jour** (`/defi`) : la même main pour tout le monde, tirée de la date (heure de Paris).
+- **Barème** (`/bareme`) : les tables de han, de fu et de points, à consulter à tout moment.
+- **Décor saisonnier** : la scène d'accueil change avec les saisons, à la manière des estampes « bambou et moineau ».
 
-## Learning Laravel
+### Règles de la table
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework.
+Riichi courant, style salle japonaise :
 
-In addition, [Laracasts](https://laracasts.com) contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
+- cinq tuiles rouges (aka-dora) ;
+- pas de kiriage mangan ;
+- double vent compté à 4 fu.
 
-You can also watch bite-sized lessons with real-world projects on [Laravel Learn](https://laravel.com/learn), where you will be guided through building a Laravel application from scratch while learning PHP fundamentals.
+Ces options sont définies dans [`App\Domain\Mahjong\Rules`](app/Domain/Mahjong/Rules.php). Elles changent le calcul, jamais la main générée.
 
-## Agentic Development
+## Stack
 
-Laravel's predictable structure and conventions make it ideal for AI coding agents like Claude Code, Cursor, and GitHub Copilot. Install [Laravel Boost](https://laravel.com/docs/ai) to supercharge your AI workflow:
+- PHP 8.4+ et Laravel 13
+- Livewire 4 pour l'entraînement interactif
+- Tailwind CSS 4 et Vite
+- Pest 4 pour les tests
+
+Les tuiles sont dessinées en SVG côté serveur et servies sous forme de sprite (`/tuiles.svg`).
+
+## Architecture
+
+| Dossier | Rôle |
+|---|---|
+| [`app/Domain/Mahjong`](app/Domain/Mahjong) | Le moteur, en PHP pur, sans dépendance à Laravel : tuiles, décomposition des mains, détection des yaku, calcul des fu et des points, génération des mains à partir d'une graine. |
+| [`app/Training`](app/Training) | Les cinq étapes de l'entraînement, la correction des réponses. |
+| [`app/Livewire`](app/Livewire) | Le composant d'entraînement. |
+| [`app/View`](app/View) | Le rendu : dessin des tuiles, barème, saisons. |
+
+Un test d'architecture ([`tests/Unit/Mahjong/ArchitectureTest.php`](tests/Unit/Mahjong/ArchitectureTest.php)) garantit que le moteur reste indépendant du framework et que la génération des mains n'utilise aucun hasard non reproductible.
+
+## Installation
+
+Prérequis : PHP 8.4+, Composer, Node.js 22+.
 
 ```bash
-composer require laravel/boost --dev
-
-php artisan boost:install
+git clone https://github.com/Adrien-Cl/tenpai.git
+cd tenpai
+composer setup
 ```
 
-Boost provides your agent 15+ tools and skills that help agents build Laravel applications while following best practices.
+`composer setup` installe les dépendances PHP et JS, crée le `.env`, génère la clé, lance les migrations et compile les assets.
 
-## Contributing
+## Développement
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+```bash
+composer dev
+```
 
-## Code of Conduct
+Lance les processus de développement (`php artisan dev` : serveur, Vite…) avec rechargement à chaud.
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
+## Tests et qualité
 
-## Security Vulnerabilities
+```bash
+php artisan test --compact   # Pest : moteur (Unit) et pages (Feature)
+vendor/bin/pint              # Formatage du code
+```
 
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
+Les tests du moteur (`tests/Unit`) tournent sur des classes PHP pures. Seuls les tests `tests/Feature` démarrent Laravel.
 
-## License
+## Intégration continue
 
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+GitHub Actions ([`.github/workflows/ci.yml`](.github/workflows/ci.yml)) s'exécute à chaque push sur `main` et sur chaque pull request :
+
+- **Qualité du code** : `composer validate` et Pint ;
+- **Build front** : compilation des assets avec Vite ;
+- **Tests** : Pest sur PHP 8.4 et 8.5 ;
+- **Audit de sécurité** : `composer audit` et `npm audit`.
+
+Dependabot propose chaque semaine les mises à jour de Composer, npm et des actions GitHub.
+
+## Licence
+
+MIT.

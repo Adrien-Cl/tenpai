@@ -767,7 +767,7 @@
         align-items: baseline;
         justify-content: space-between;
         gap: 0.75rem;
-        padding: 0.35rem 0.75rem;
+        padding: 0.3rem 0.5rem;
         border-radius: 999px;
         background: var(--gilt-soft);
         color: var(--gilt-ink);
@@ -776,6 +776,12 @@
 
     .limit-band .display {
         color: var(--ink);
+    }
+
+    @media (min-width: 640px) {
+        .limit-band {
+            padding: 0.35rem 0.75rem;
+        }
     }
 
     .limit-band.is-picked {

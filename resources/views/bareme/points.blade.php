@@ -79,7 +79,7 @@
                 @elseif ($dealer)
                     ce que paie chaque adversaire.
                 @else
-                    chaque non-donneur / le donneur.
+                    en haut ce que paie chaque non-donneur, en dessous ce que paie le donneur.
                 @endif
             </p>
             <div class="-mx-1 mt-3 overflow-x-auto px-1">
@@ -87,7 +87,7 @@
                     <caption class="sr-only">Points {{ $tsumo ? 'en tsumo' : 'en ron' }} {{ $dealer ? 'du donneur' : 'd’un non-donneur' }}, selon les han et les fu</caption>
                     <thead>
                         <tr>
-                            <th scope="col" class="w-[18%] pb-2 text-left text-sm font-medium text-ink-muted">Fu</th>
+                            <th scope="col" class="w-[13%] pb-2 text-left text-sm font-medium text-ink-muted sm:w-[18%]">Fu</th>
                             @foreach ([1, 2, 3, 4] as $han)
                                 <th scope="col" class="pb-2 text-sm font-medium text-ink-muted">{{ $han }} han</th>
                             @endforeach
@@ -97,7 +97,7 @@
                         @foreach ($sheet->pointGrid($dealer, $tsumo) as $row)
                             <tr>
                                 <th scope="row" class="border-t border-paper-line py-2 text-left font-normal">
-                                    <span class="display num text-[0.95rem] sm:text-lg">{{ $row['fu'] }}</span> <span class="text-sm text-ink-muted">fu</span>
+                                    <span class="display num text-[0.8rem] sm:text-lg">{{ $row['fu'] }}</span> <span class="hidden text-sm text-ink-muted sm:inline">fu</span>
                                 </th>
                                 @foreach ($row['cells'] as $cell)
                                     @if ($cell['value'] === null)
@@ -106,7 +106,10 @@
                                         <td class="border-t border-paper-line px-1 py-2 sm:px-2"
                                             :class="han === {{ $cell['han'] }} && fu === {{ $row['fu'] }} && 'is-picked'"
                                             x-on:click="han = {{ $cell['han'] }}; fu = {{ $row['fu'] }}">
-                                            <span class="display num text-[0.95rem] sm:text-lg">{{ $cell['value'] }}</span>
+                                            <span class="display num block text-[0.8rem] sm:text-lg">{{ $cell['value'] }}</span>
+                                            @if ($cell['detail'])
+                                                <span class="num block text-[0.7rem] opacity-70 sm:text-xs">{{ $cell['detail'] }}</span>
+                                            @endif
                                         </td>
                                     @endif
                                 @endforeach
@@ -115,7 +118,12 @@
                                         <span class="limit-band" x-on:click="han = {{ $row['limit']['from'] }}; fu = {{ $row['fu'] }}"
                                               :class="han >= {{ $row['limit']['from'] }} && han < 5 && fu === {{ $row['fu'] }} && 'is-picked'">
                                             <span class="hidden text-sm sm:inline">{{ $row['limit']['label'] }}</span>
-                                            <span class="display num ml-auto text-[0.95rem] sm:text-lg">{{ $row['limit']['value'] }}</span>
+                                            <span class="ml-auto text-right leading-tight">
+                                                <span class="display num block text-[0.8rem] sm:text-lg">{{ $row['limit']['value'] }}</span>
+                                                @if ($row['limit']['detail'])
+                                                    <span class="num block text-[0.7rem] opacity-70 sm:text-xs">{{ $row['limit']['detail'] }}</span>
+                                                @endif
+                                            </span>
                                         </span>
                                     </td>
                                 @endif
@@ -131,6 +139,9 @@
                     <li class="rounded-lg bg-paper-sunk px-3 py-2.5">
                         <span class="block font-bold">{{ $limit['label'] }}</span>
                         <span class="display num block text-lg">{{ $limit['value'] }}</span>
+                        @if ($limit['detail'])
+                            <span class="num block text-xs text-ink-muted">donneur : {{ $limit['detail'] }}</span>
+                        @endif
                         <span class="block text-xs text-ink-muted">{{ $limit['condition'] }}</span>
                     </li>
                 @endforeach
