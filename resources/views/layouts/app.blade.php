@@ -2,6 +2,7 @@
 @php
     $season = \App\View\Season::current(now(), request()->query('saison'));
     $tableRules = \App\Support\TableRules::fromRequest(request());
+    $backdrop = \App\View\Backdrop::fromRequest(request());
     $locale = app()->getLocale();
     $alternates = \App\Support\Locale::alternates(request());
     $currentRoute = \App\Support\Locale::baseRouteName(request()->route()?->getName() ?? '');
@@ -10,14 +11,16 @@
     $pageDescription = $description ?? __('Entraînez-vous à compter une main de mahjong riichi en cinq étapes : yaku, han, dora, fu et points.');
 @endphp
 <!DOCTYPE html>
-<html lang="{{ $locale }}" data-season="{{ $season->value }}">
+<html lang="{{ $locale }}" data-season="{{ $season->value }}" @if ($backdrop) data-theme="{{ $backdrop->value }}" @endif>
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
     <title>{{ $pageTitle }}</title>
     <meta name="description" content="{{ $pageDescription }}">
-    <meta name="theme-color" content="#f4eddc" media="(prefers-color-scheme: light)">
-    <meta name="theme-color" content="#131922" media="(prefers-color-scheme: dark)">
+    {{-- La barre du navigateur suit le système, ou le fond choisi. --}}
+    @foreach (\App\View\Backdrop::cases() as $scheme)
+        <meta name="theme-color" content="{{ ($backdrop ?? $scheme)->themeColor() }}" media="(prefers-color-scheme: {{ $scheme->value }})">
+    @endforeach
     <link rel="icon" href="{{ asset('favicon.svg') }}" type="image/svg+xml">
     <link rel="apple-touch-icon" href="{{ asset('icons/apple-touch-icon.png') }}">
     <link rel="manifest" href="{{ asset('manifest.webmanifest') }}">
@@ -92,6 +95,20 @@
                 <span class="absolute top-1.5 right-1.5 size-2 rounded-full bg-shu" aria-hidden="true"></span>
                 <span class="sr-only">{{ __('(règles personnalisées)') }}</span>
             @endunless
+        </button>
+
+        {{-- Fond : la lune pour passer à la nuit, le soleil pour revenir au jour. --}}
+        <button type="button" x-data="backdropToggle(@js(\App\View\Backdrop::themeColors()))"
+                x-on:click="toggle" x-bind:aria-pressed="dark"
+                class="-ml-1 grid size-9 shrink-0 place-items-center rounded-lg text-ink-muted transition-colors hover:bg-paper-sunk hover:text-ink sm:ml-0 sm:size-10"
+                aria-label="{{ __('Fond foncé') }}" title="{{ __('Fond foncé') }}">
+            <svg class="size-5 dark:hidden" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <path d="M20 14.5A8 8 0 0 1 9.5 4a8 8 0 1 0 10.5 10.5Z"/>
+            </svg>
+            <svg class="hidden size-5 dark:block" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true">
+                <circle cx="12" cy="12" r="4"/>
+                <path d="M12 2.5v2M12 19.5v2M2.5 12h2M19.5 12h2M5.3 5.3l1.4 1.4M17.3 17.3l1.4 1.4M5.3 18.7l1.4-1.4M17.3 6.7l1.4-1.4"/>
+            </svg>
         </button>
 
         {{-- Langue : le code de l'autre langue, qui mène à la même page traduite. --}}

@@ -1,5 +1,8 @@
 import { prepare, suggest, notYakuHint } from './yaku-search';
 import { pageLocale, t } from './text';
+import { applyChoice, choiceCookie, choiceFor, readChoice } from './backdrop';
+
+const darkSystem = window.matchMedia('(prefers-color-scheme: dark)');
 
 const STEP_KEYS = ['yaku', 'han', 'dora', 'fu', 'points'];
 const emptyProgress = () => ({ hands: 0, perfect: 0, streak: 0, best: 0, steps: {}, seen: [], missedYaku: {} });
@@ -196,6 +199,36 @@ document.addEventListener('alpine:init', () => {
             },
         };
     });
+
+    /**
+     * Bouton du fond (en-tête) : passe du clair au foncé et inversement. L'icône suit le CSS ; ici, l'état annoncé.
+     */
+    Alpine.data('backdropToggle', (themeColors) => ({
+        dark: false,
+
+        init() {
+            this.sync = () => {
+                const choice = readChoice(document.cookie);
+                this.dark = choice ? choice === 'dark' : darkSystem.matches;
+            };
+            this.sync();
+            darkSystem.addEventListener('change', this.sync);
+        },
+
+        destroy() {
+            darkSystem.removeEventListener('change', this.sync);
+        },
+
+        toggle() {
+            this.dark = !this.dark;
+            const choice = choiceFor(this.dark, darkSystem.matches);
+            document.cookie = choiceCookie(choice, location.protocol === 'https:');
+            applyChoice(choice);
+            document.querySelectorAll('meta[name="theme-color"]').forEach((meta) => {
+                meta.content = themeColors[this.dark ? 'dark' : 'light'];
+            });
+        },
+    }));
 
     /**
      * Barème : trois onglets (Han, Fu, Points). Sur la page, l'onglet suit l'adresse (#fu…).
@@ -395,6 +428,9 @@ document.addEventListener('alpine:init', () => {
 if ('serviceWorker' in navigator && window.isSecureContext) {
     window.addEventListener('load', () => navigator.serviceWorker.register('/sw.js').catch(() => {}));
 }
+
+// Fond : une page rendue avant le dernier choix (retour arrière de wire:navigate, page hors ligne) le reprend.
+document.addEventListener('livewire:navigated', () => applyChoice(readChoice(document.cookie)));
 
 // Raccourcis clavier : B ouvre le barème, N passe à la main suivante (quand la main est finie).
 document.addEventListener('keydown', (event) => {
