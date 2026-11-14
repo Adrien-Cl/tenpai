@@ -3,7 +3,8 @@ services:
     build:
       context: .
       target: app
-    image: tenpai:latest
+    # L'image est construite sur place depuis le Dockerfile : rien à télécharger d'un registre.
+    pull_policy: build
     restart: unless-stopped
     ports:
       - "${APP_PORT:-8000}:80"
