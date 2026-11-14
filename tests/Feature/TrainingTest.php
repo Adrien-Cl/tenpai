@@ -2,6 +2,7 @@
 
 use App\Domain\Mahjong\Generation\Seed;
 use App\Livewire\Training;
+use App\Training\Steps\DoraStep;
 use App\Training\TrainingHand;
 use Livewire\Features\SupportLockedProperties\CannotUpdateLockedPropertyException;
 use Livewire\Livewire;
@@ -262,4 +263,75 @@ it('ne signale aucun yaku oublié quand la main est juste ou l’étape donnée'
     Livewire::test(Training::class, ['seed' => 'tenpai', 'drill' => 'points'])
         ->call('reveal')
         ->assertDispatched('hand-finished', missed: []);
+});
+
+it('compte à 0 les fu laissés vides', function () {
+    $answers = correctAnswers('tenpai')['fu'];
+    $reading = TrainingHand::fromSeed(Seed::fromString('tenpai'))->evaluation->reading();
+    $zeros = array_values(array_filter($reading->fu->parts, fn ($part) => $part->fu === 0));
+
+    expect($zeros)->not->toBeEmpty();
+
+    foreach ($zeros as $part) {
+        unset($answers[$part->key]);
+    }
+
+    $answers[$zeros[0]->key] = ' ';
+
+    $component = Livewire::test(Training::class, ['seed' => 'tenpai', 'drill' => 'fu'])
+        ->set('answers.fu', $answers)
+        ->call('check')
+        ->assertSet('results.3.ok', true);
+
+    foreach ($zeros as $part) {
+        $component->assertSet("answers.fu.{$part->key}", 0);
+    }
+});
+
+it('choisit « aucune » limite quand rien n’est coché', function () {
+    $answers = correctAnswers('tenpai')['points'];
+    $limit = $answers['limit'];
+    unset($answers['limit']);
+
+    Livewire::test(Training::class, ['seed' => 'tenpai', 'drill' => 'points'])
+        ->set('answers.points', $answers)
+        ->call('check')
+        ->assertSet('answers.points.limit', 'none')
+        ->assertSet('results.4.fields.limit.state', $limit === 'none' ? 'ok' : 'ko');
+});
+
+it('bloque la saisie de caractères autres que des chiffres', function () {
+    Livewire::test(Training::class, ['seed' => 'tenpai', 'drill' => 'fu'])
+        ->assertSeeHtml('x-on:beforeinput="/\D/.test(')
+        ->assertSeeHtml('placeholder="0"');
+});
+
+it('compte à 0 les dora laissés vides, mais pas le total des han', function () {
+    $answers = correctAnswers('tenpai')['dora'];
+    $shown = DoraStep::fields(TrainingHand::fromSeed(Seed::fromString('tenpai')));
+    $zeros = array_keys(array_filter($answers, fn (string $value, string $key) => isset($shown[$key]) && $key !== 'han' && $value === '0', ARRAY_FILTER_USE_BOTH));
+
+    expect($zeros)->not->toBeEmpty();
+
+    foreach ($zeros as $key) {
+        $answers[$key] = '';
+    }
+
+    $component = Livewire::test(Training::class, ['seed' => 'tenpai'])
+        ->call('reveal')->call('next')
+        ->call('reveal')->call('next')
+        ->set('answers.dora', $answers)
+        ->call('check')
+        ->assertSet('results.2.ok', true);
+
+    foreach ($zeros as $key) {
+        $component->assertSet("answers.dora.{$key}", 0);
+    }
+
+    Livewire::test(Training::class, ['seed' => 'tenpai'])
+        ->call('reveal')->call('next')
+        ->call('reveal')->call('next')
+        ->set('answers.dora', [...$answers, 'han' => ''])
+        ->call('check')
+        ->assertSet('results.2.fields.han.state', 'ko');
 });

@@ -64,6 +64,7 @@ final class DoraStep implements Step
         $result = new StepResult($reveal);
         $evaluation = $hand->evaluation;
         $fields = self::fields($hand);
+        $answers = Answers::emptyAsZero($answers, array_values(array_diff(array_keys($fields), ['han'])));
 
         $expected = [
             'dora' => $evaluation->dora->count,

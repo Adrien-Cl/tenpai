@@ -1,9 +1,11 @@
 {{--
     Une ligne de la fiche : intitulé, champ numérique, correction.
     model : chemin wire:model · field : résultat de la correction (state, expected, why) · title : intitulé texte
+    placeholder : valeur affichée en grisé tant que le champ est vide
     Le slot par défaut remplace l'intitulé (par exemple des tuiles).
+    Le champ n'accepte que des chiffres : le reste est bloqué à la frappe comme au collage.
 --}}
-@props(['model', 'id', 'title' => null, 'sub' => null, 'field' => null])
+@props(['model', 'id', 'title' => null, 'sub' => null, 'field' => null, 'placeholder' => null])
 @php
     $state = $field['state'] ?? null;
 @endphp
@@ -25,6 +27,8 @@
         </span>
         <input id="{{ $id }}" type="number" inputmode="numeric" min="0" step="1" autocomplete="off"
                wire:model="{{ $model }}" @disabled($field !== null)
+               @if ($placeholder !== null) placeholder="{{ $placeholder }}" @endif
+               x-on:beforeinput="/\D/.test($event.data ?? $event.dataTransfer?.getData('text') ?? '') && $event.preventDefault()"
                @class(['field', 'is-ok' => $state === 'ok', 'is-ko' => $state === 'ko'])
                @if ($state === 'ko') aria-invalid="true" @endif>
     </div>

@@ -26,6 +26,26 @@ final class Answers
     }
 
     /**
+     * Un champ laissé vide vaut 0 : on n'a pas à taper 0 pour chaque ligne qui ne rapporte rien.
+     *
+     * @param  array<string, mixed>  $answers
+     * @param  list<string>  $keys
+     * @return array<string, mixed>
+     */
+    public static function emptyAsZero(array $answers, array $keys): array
+    {
+        foreach ($keys as $key) {
+            $value = $answers[$key] ?? null;
+
+            if ($value === null || (is_string($value) && trim($value) === '')) {
+                $answers[$key] = 0;
+            }
+        }
+
+        return $answers;
+    }
+
+    /**
      * @param  array<string, mixed>  $answers
      */
     public static function string(array $answers, string $key): ?string

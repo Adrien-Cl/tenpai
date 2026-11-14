@@ -8,19 +8,19 @@
 @endphp
 
 @if ($reading->chiitoitsu)
-    <x-answer-row id="f-fu-final" model="answers.fu.final" :title="__('Fu de la main')" :sub="__('sept paires')" :field="$fields['final'] ?? null" />
+    <x-answer-row placeholder="0" id="f-fu-final" model="answers.fu.final" :title="__('Fu de la main')" :sub="__('sept paires')" :field="$fields['final'] ?? null" />
 @else
     <div>
         @foreach ($reading->fu->parts as $part)
             @if ($part->key === 'base')
-                <x-answer-row wire:key="fu-base" id="f-fu-base" model="answers.fu.base" :title="__('Base')" sub="fuutei" :field="$fields['base'] ?? null" />
+                <x-answer-row placeholder="0" wire:key="fu-base" id="f-fu-base" model="answers.fu.base" :title="__('Base')" sub="fuutei" :field="$fields['base'] ?? null" />
             @elseif ($part->key === 'win')
-                <x-answer-row wire:key="fu-win" id="f-fu-win" model="answers.fu.win" :title="$h->tsumo ? __('Victoire par tsumo') : __('Victoire par ron')" :sub="$evaluation->menzen ? __('main fermée') : __('main ouverte')" :field="$fields['win'] ?? null" />
+                <x-answer-row placeholder="0" wire:key="fu-win" id="f-fu-win" model="answers.fu.win" :title="$h->tsumo ? __('Victoire par tsumo') : __('Victoire par ron')" :sub="$evaluation->menzen ? __('main fermée') : __('main ouverte')" :field="$fields['win'] ?? null" />
             @elseif (str_starts_with($part->key, 'g') || $part->key === 'pair')
                 @php
                     $sub = $part->key === 'pair' ? __('paire') : ($part->group?->meld?->label() ?? __('dans la main'));
                 @endphp
-                <x-answer-row wire:key="fu-{{ $part->key }}" :id="'f-fu-'.$part->key" :model="'answers.fu.'.$part->key" :sub="$sub" :field="$fields[$part->key] ?? null"
+                <x-answer-row placeholder="0" wire:key="fu-{{ $part->key }}" :id="'f-fu-'.$part->key" :model="'answers.fu.'.$part->key" :sub="$sub" :field="$fields[$part->key] ?? null"
                               x-on:mouseenter="lit = '{{ $part->key }}'" x-on:mouseleave="lit = null" x-on:focusin="lit = '{{ $part->key }}'" x-on:focusout="lit = null"
                               class="-mx-2 rounded-lg px-2 transition-colors hover:bg-paper-sunk">
                     <span class="mini tiles">
@@ -53,12 +53,12 @@
                         @endforeach
                     </div>
                 </fieldset>
-                <x-answer-row wire:key="fu-wait" id="f-fu-wait" model="answers.fu.wait" :title="__('Fu d’attente')" :field="$fields['wait'] ?? null" />
+                <x-answer-row placeholder="0" wire:key="fu-wait" id="f-fu-wait" model="answers.fu.wait" :title="__('Fu d’attente')" :field="$fields['wait'] ?? null" />
             @endif
         @endforeach
 
-        <x-answer-row wire:key="fu-raw" id="f-fu-raw" model="answers.fu.raw" :title="__('Total avant arrondi')" :field="$fields['raw'] ?? null" class="mt-2 border-t-2! border-ink/70!" />
-        <x-answer-row wire:key="fu-final" id="f-fu-final" model="answers.fu.final" :title="__('Fu de la main')" :sub="__('après arrondi')" :field="$fields['final'] ?? null" />
+        <x-answer-row placeholder="0" wire:key="fu-raw" id="f-fu-raw" model="answers.fu.raw" :title="__('Total avant arrondi')" :field="$fields['raw'] ?? null" class="mt-2 border-t-2! border-ink/70!" />
+        <x-answer-row placeholder="0" wire:key="fu-final" id="f-fu-final" model="answers.fu.final" :title="__('Fu de la main')" :sub="__('après arrondi')" :field="$fields['final'] ?? null" />
     </div>
 @endif
 

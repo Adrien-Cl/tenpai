@@ -7,6 +7,7 @@
                       :model="'answers.dora.'.$key"
                       :title="$f['label']"
                       :sub="$f['sub']"
+                      :placeholder="$key === 'han' ? null : '0'"
                       :field="$result['fields'][$key] ?? null"
                       :class="$key === 'han' ? 'mt-2 border-t-2! border-ink/70!' : ''" />
     @endforeach

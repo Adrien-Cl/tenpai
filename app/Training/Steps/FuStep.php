@@ -45,6 +45,9 @@ final class FuStep implements Step
         $reading = $hand->evaluation->reading();
         $fu = $reading->fu;
         $ok = true;
+        $answers = Answers::emptyAsZero($answers, $reading->chiitoitsu
+            ? ['final']
+            : [...array_map(fn (FuPart $part): string => $part->key, $fu->parts), 'raw', 'final']);
 
         if ($reading->chiitoitsu) {
             $ok = $result->mark('final', Answers::int($answers, 'final') === 25, '25', $fu->parts[0]->why);

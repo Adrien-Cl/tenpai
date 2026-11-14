@@ -111,6 +111,10 @@ final class PointsStep implements Step
         $payment = $hand->evaluation->payment();
         $limit = $payment->limit?->value ?? 'none';
 
+        if (! isset(self::limits()[(string) Answers::string($answers, 'limit')])) {
+            $answers['limit'] = 'none';
+        }
+
         $ok = $result->mark('limit', Answers::string($answers, 'limit') === $limit, self::limits()[$limit]);
 
         if ($reveal) {
