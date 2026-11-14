@@ -43,12 +43,15 @@ final readonly class Seed
     }
 
     /**
-     * Une graine d'entraînement ciblé : « chinitsu-ab12cd34 ». Le thème fait partie de la graine,
-     * l'adresse redonne donc la même main, du même thème.
+     * Une graine d'entraînement ciblé : « chinitsu-ab12cd34 », « expert-chinitsu-ab12cd34 ».
+     * Le niveau et le thème font partie de la graine : l'adresse redonne donc la même main.
      */
-    public static function themed(Theme $theme): self
+    public static function themed(Theme $theme, Level $level = Level::Standard): self
     {
-        return $theme === Theme::Free ? self::random() : new self($theme->value.'-'.self::randomPart());
+        $prefix = ($level === Level::Standard ? '' : $level->value.'-')
+            .($theme === Theme::Free ? '' : $theme->value.'-');
+
+        return new self($prefix.self::randomPart());
     }
 
     /**
@@ -56,13 +59,44 @@ final readonly class Seed
      */
     public function theme(): ?Theme
     {
-        if (preg_match('/^([a-z]+)-[a-z0-9]{8}$/', $this->value, $matches) !== 1) {
-            return null;
-        }
-
-        $theme = Theme::tryFrom($matches[1]);
+        $theme = Theme::tryFrom($this->prefixes()['theme'] ?? '');
 
         return $theme === Theme::Free ? null : $theme;
+    }
+
+    /**
+     * Le niveau de la graine : normal sans préfixe de niveau.
+     */
+    public function level(): Level
+    {
+        return $this->prefixes()['level'] ?? Level::Standard;
+    }
+
+    /**
+     * Les préfixes d'une graine tirée par le site : niveau, puis thème, puis huit caractères.
+     *
+     * @return array{level?: Level, theme?: string}
+     */
+    private function prefixes(): array
+    {
+        if (preg_match('/^(?:([a-z]+)-)?(?:([a-z]+)-)?[a-z0-9]{8}$/', $this->value, $matches) !== 1) {
+            return [];
+        }
+
+        $words = array_values(array_filter([$matches[1] ?? '', $matches[2] ?? ''], fn (string $word): bool => $word !== ''));
+        $level = Level::tryFrom($words[0] ?? '');
+        $prefixes = [];
+
+        if ($level !== null && $level !== Level::Standard) {
+            $prefixes['level'] = $level;
+            array_shift($words);
+        }
+
+        if (count($words) === 1) {
+            $prefixes['theme'] = $words[0];
+        }
+
+        return $prefixes;
     }
 
     private static function randomPart(): string

@@ -1,5 +1,5 @@
 <?php
 
 it('affiche les pages principales sans erreur JavaScript', function () {
-    visit(['/', '/bareme', '/entrainement/tenpai', '/exercice/fu/tenpai', '/hors-ligne'])->assertNoSmoke();
+    visit(['/', '/bareme', '/comptage/tenpai', '/exercice/fu/tenpai', '/exercice/lectures/tenpai', '/attentes/tenpai', '/hors-ligne'])->assertNoSmoke();
 });

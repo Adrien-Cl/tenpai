@@ -42,6 +42,15 @@
             @foreach ($tags as $tag)
                 <span class="rounded-lg bg-felt-deep/60 px-3 py-2 text-sm text-felt-ink">{{ $tag }}</span>
             @endforeach
+            {{-- Honba (bâtons de 100) et bâtons de riichi posés sur la table, quand on les compte. --}}
+            @if ($tableLine = \App\Training\Steps\PointsStep::tableLine($hand))
+                <span class="flex items-center gap-2 rounded-lg bg-felt-deep/60 px-3 py-2 text-sm text-felt-ink" data-table-bonus>
+                    @if ($h->honba > 0)
+                        <svg class="h-2.5 w-10" viewBox="0 0 120 12" aria-hidden="true"><rect x=".5" y=".5" width="119" height="11" rx="2.5" fill="#f6f0e2" stroke="rgba(0,0,0,.25)"/>@foreach ([12, 22, 98, 108] as $x)<circle cx="{{ $x }}" cy="4" r="1.4" fill="#1a1714"/><circle cx="{{ $x }}" cy="8" r="1.4" fill="#1a1714"/>@endforeach</svg>
+                    @endif
+                    {{ $tableLine }}
+                </span>
+            @endif
             <button type="button" class="ml-auto rounded-lg px-3 py-2 text-sm text-felt-muted hover:bg-felt-raised hover:text-felt-ink sm:ml-0" x-on:click="share()">
                 <span x-show="!copied">{{ __('Partager cette main') }}</span>
                 <span x-cloak x-show="copied" class="text-gilt">{{ __('Lien copié') }}</span>

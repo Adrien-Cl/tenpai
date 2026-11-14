@@ -69,11 +69,7 @@ document.addEventListener('alpine:init', () => {
             // Exercice court : compté à part, sans toucher aux statistiques des mains complètes.
             if (drill) {
                 const played = STEP_KEYS.slice(first).map((_, i) => !!results[first + i]);
-                const previous = this.drills[drill] ?? { hands: 0, perfect: 0 };
-                this.drills = {
-                    ...this.drills,
-                    [drill]: { hands: previous.hands + 1, perfect: previous.perfect + (played.every(Boolean) ? 1 : 0) },
-                };
+                this.countDrill(drill, played.every(Boolean));
                 return;
             }
 
@@ -106,6 +102,25 @@ document.addEventListener('alpine:init', () => {
             if (daily && !this.daily[daily]) {
                 this.daily = { ...this.daily, [daily]: { score: flags.filter(Boolean).length, perfect, steps: flags } };
             }
+        },
+
+        /**
+         * Un exercice à part (attentes, lectures) : une seule correction, comptée avec les exercices courts.
+         */
+        recordDrill({ seed, drill, perfect }) {
+            const key = `${drill}:${seed}`;
+            if (this.data.seen.includes(key)) return;
+
+            this.data.seen = [...this.data.seen, key].slice(-60);
+            this.countDrill(drill, perfect);
+        },
+
+        countDrill(drill, perfect) {
+            const previous = this.drills[drill] ?? { hands: 0, perfect: 0 };
+            this.drills = {
+                ...this.drills,
+                [drill]: { hands: previous.hands + 1, perfect: previous.perfect + (perfect ? 1 : 0) },
+            };
         },
 
         /**

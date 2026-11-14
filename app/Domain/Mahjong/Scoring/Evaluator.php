@@ -15,6 +15,59 @@ final class Evaluator
 {
     public static function evaluate(Hand $hand, Rules $rules): Evaluation
     {
+        [$candidates, $yakuman] = self::candidates($hand, $rules);
+
+        if ($yakuman) {
+            return Evaluation::rejected(EvaluationStatus::Yakuman);
+        }
+
+        if ($candidates === []) {
+            return Evaluation::rejected(EvaluationStatus::Invalid);
+        }
+
+        return self::best($hand, $rules, $hand->isClosed(), $candidates);
+    }
+
+    /**
+     * Toutes les lectures qui ont un yaku, comptées, de la plus payante à la moins payante.
+     * Les découpages qui se comptent pareil n'apparaissent qu'une fois. Vide pour un yakuman.
+     *
+     * @return list<ScoredReading>
+     */
+    public static function scoredReadings(Hand $hand, Rules $rules): array
+    {
+        [$candidates, $yakuman] = self::candidates($hand, $rules);
+
+        if ($yakuman) {
+            return [];
+        }
+
+        $scored = [];
+
+        foreach ($candidates as $reading) {
+            if ($reading->hasYaku()) {
+                $scored[] = self::score($hand, $rules, $reading);
+            }
+        }
+
+        usort($scored, fn (ScoredReading $a, ScoredReading $b): int => self::compare($b->payment, $b->han, $b->fu(), $a->payment, $a->han, $a->fu()));
+
+        $unique = [];
+
+        foreach ($scored as $reading) {
+            $unique[$reading->signature()] ??= $reading;
+        }
+
+        return array_values($unique);
+    }
+
+    /**
+     * Les lectures de la main, et si l'une d'elles forme un yakuman.
+     *
+     * @return array{list<Reading>, bool}
+     */
+    private static function candidates(Hand $hand, Rules $rules): array
+    {
         $menzen = $hand->isClosed();
         $meldGroups = array_map(Group::fromMeld(...), $hand->melds);
         $candidates = [];
@@ -70,15 +123,7 @@ final class Evaluator
             }
         }
 
-        if ($yakuman) {
-            return Evaluation::rejected(EvaluationStatus::Yakuman);
-        }
-
-        if ($candidates === []) {
-            return Evaluation::rejected(EvaluationStatus::Invalid);
-        }
-
-        return self::best($hand, $rules, $menzen, $candidates);
+        return [$candidates, $yakuman];
     }
 
     /**
@@ -86,12 +131,6 @@ final class Evaluator
      */
     private static function best(Hand $hand, Rules $rules, bool $menzen, array $candidates): Evaluation
     {
-        $allTiles = $hand->allTiles();
-        $dora = DoraCount::count($allTiles, $hand->dora);
-        $ura = $hand->riichi ? DoraCount::count($allTiles, $hand->ura) : DoraCount::none();
-        $aka = $rules->aka ? $hand->aka : 0;
-        $dealer = $hand->isDealer();
-
         $best = null;
         $variants = [];
 
@@ -100,12 +139,11 @@ final class Evaluator
                 continue;
             }
 
-            $han = $reading->yakuHan() + $dora->count + $ura->count + $aka;
-            $payment = PointsCalculator::points($han, $reading->fu->fu, $dealer, $hand->tsumo, $rules);
+            $scored = self::score($hand, $rules, $reading);
             $variants[$reading->wait->value.':'.$reading->fu->fu.':'.$reading->yakuHan()] = true;
 
-            if ($best === null || self::isBetter($payment, $han, $reading->fu->fu, $best)) {
-                $best = ['reading' => $reading, 'payment' => $payment, 'han' => $han];
+            if ($best === null || self::compare($scored->payment, $scored->han, $scored->fu(), $best->payment, $best->han, $best->fu()) > 0) {
+                $best = $scored;
             }
         }
 
@@ -113,32 +151,66 @@ final class Evaluator
             return Evaluation::rejected(EvaluationStatus::NoYaku);
         }
 
+        [$dora, $ura, $aka] = self::dora($hand, $rules);
+
         return new Evaluation(
             status: EvaluationStatus::Valid,
-            reading: $best['reading'],
-            payment: $best['payment'],
-            han: $best['han'],
+            reading: $best->reading,
+            payment: $best->payment,
+            han: $best->han,
             dora: $dora,
             ura: $ura,
             aka: $aka,
             menzen: $menzen,
-            dealer: $dealer,
+            dealer: $hand->isDealer(),
             multiple: count($variants) > 1,
         );
     }
 
     /**
-     * Plus de points, puis plus de han, puis plus de fu.
-     *
-     * @param  array{reading: Reading, payment: Payment, han: int}  $best
+     * Compte une lecture : ses yaku, les dora de la main, puis le paiement (honba et bâtons
+     * de riichi compris quand la table les compte).
      */
-    private static function isBetter(Payment $payment, int $han, int $fu, array $best): bool
+    private static function score(Hand $hand, Rules $rules, Reading $reading): ScoredReading
     {
-        $comparison = $payment->total <=> $best['payment']->total
-            ?: $han <=> $best['han']
-            ?: $fu <=> $best['reading']->fu->fu;
+        [$dora, $ura, $aka] = self::dora($hand, $rules);
+        $han = $reading->yakuHan() + $dora->count + $ura->count + $aka;
 
-        return $comparison > 0;
+        $payment = PointsCalculator::points(
+            $han,
+            $reading->fu->fu,
+            $hand->isDealer(),
+            $hand->tsumo,
+            $rules,
+            honba: $rules->honba ? $hand->honba : 0,
+            sticks: $rules->honba ? $hand->riichiSticks : 0,
+        );
+
+        return new ScoredReading($reading, $han, $payment);
+    }
+
+    /**
+     * @return array{DoraCount, DoraCount, int} dora, ura-dora et cinq rouges
+     */
+    private static function dora(Hand $hand, Rules $rules): array
+    {
+        $allTiles = $hand->allTiles();
+
+        return [
+            DoraCount::count($allTiles, $hand->dora),
+            $hand->riichi ? DoraCount::count($allTiles, $hand->ura) : DoraCount::none(),
+            $rules->aka ? $hand->aka : 0,
+        ];
+    }
+
+    /**
+     * Plus de points, puis plus de han, puis plus de fu : positif si la première lecture l'emporte.
+     */
+    private static function compare(Payment $payment, int $han, int $fu, Payment $other, int $otherHan, int $otherFu): int
+    {
+        return $payment->total <=> $other->total
+            ?: $han <=> $otherHan
+            ?: $fu <=> $otherFu;
     }
 
     /**

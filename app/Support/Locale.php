@@ -16,15 +16,18 @@ final class Locale
     /**
      * Préfixe d'adresse et mots des pages, par langue.
      *
-     * @var array<string, array{prefix: string, name: string, native: string, training: string, drill: string, daily: string, scoring: string, offline: string, preview: string}>
+     * @var array<string, array{prefix: string, name: string, native: string, counting: string, formerCounting: string, drill: string, waits: string, readings: string, daily: string, scoring: string, offline: string, preview: string}>
      */
     public const array LOCALES = [
         'fr' => [
             'prefix' => '',
             'name' => 'Français',
             'native' => 'fr_FR',
-            'training' => 'entrainement',
+            'counting' => 'comptage',
+            'formerCounting' => 'entrainement',
             'drill' => 'exercice',
+            'waits' => 'attentes',
+            'readings' => 'lectures',
             'daily' => 'defi',
             'scoring' => 'bareme',
             'offline' => 'hors-ligne',
@@ -34,8 +37,11 @@ final class Locale
             'prefix' => 'en',
             'name' => 'English',
             'native' => 'en_GB',
-            'training' => 'training',
+            'counting' => 'counting',
+            'formerCounting' => 'training',
             'drill' => 'drill',
+            'waits' => 'waits',
+            'readings' => 'readings',
             'daily' => 'daily',
             'scoring' => 'scoring',
             'offline' => 'offline',
@@ -55,7 +61,7 @@ final class Locale
     }
 
     /**
-     * Le nom d'une route dans une langue : « training » en français, « en.training » en anglais.
+     * Le nom d'une route dans une langue : « counting » en français, « en.counting » en anglais.
      */
     public static function routeName(string $name, ?string $locale = null): string
     {
@@ -65,7 +71,7 @@ final class Locale
     }
 
     /**
-     * Le nom d'une route sans sa langue : « en.training » → « training ».
+     * Le nom d'une route sans sa langue : « en.counting » → « counting ».
      */
     public static function baseRouteName(string $name): string
     {

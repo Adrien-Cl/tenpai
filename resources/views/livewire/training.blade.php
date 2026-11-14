@@ -33,28 +33,11 @@
             <span>{{ __(':date : la même main pour tout le monde.', ['date' => ucfirst(\Illuminate\Support\Carbon::parse($daily)->translatedFormat(__('l j F')))]) }}</span>
         </p>
     @else
-        {{-- Entraînement ciblé et exercices courts : changer l'un ou l'autre tire une nouvelle main. --}}
-        {{-- Sur téléphone, les deux listes côte à côte ; 16 px au moins, sinon iOS zoome en les ouvrant. --}}
-        @php($selectClass = 'h-10 w-full min-w-0 truncate rounded-lg bg-paper-sunk px-3 text-base text-ink shadow-[inset_0_0_0_1px_var(--paper-line)] focus:shadow-[inset_0_0_0_2px_var(--ink)] focus:outline-none sm:w-auto sm:max-w-full')
-        <form method="GET" action="{{ localized_route('training') }}" class="mb-3 grid grid-cols-2 gap-2 sm:mb-5 sm:flex sm:flex-wrap sm:items-center sm:gap-x-3">
-            <label for="training-drill" class="sr-only text-ink-muted sm:not-sr-only">{{ __('Entraînement') }}</label>
-            <select id="training-drill" name="exercice" x-on:change="$el.form.submit()" class="{{ $selectClass }}">
-                <option value="">{{ __('Main complète : les cinq étapes') }}</option>
-                @foreach (\App\Livewire\Training::DRILLS as $key => ['first' => $first, 'label' => $label])
-                    <option value="{{ $key }}" @selected($drill === $key)>{{ trans_choice(':drill : :count étape|:drill : :count étapes', \App\Livewire\Training::RECAP - $first, ['drill' => __($label)]) }}</option>
-                @endforeach
-            </select>
-            <label for="training-theme" class="sr-only">{{ __('Thème') }}</label>
-            <select id="training-theme" name="theme" x-on:change="$el.form.submit()" class="{{ $selectClass }}">
-                <option value="{{ \App\Domain\Mahjong\Generation\Theme::Free->value }}">{{ __('Main libre : tous les yaku') }}</option>
-                <optgroup label="{{ __('Une main avec…') }}">
-                    @foreach (\App\Domain\Mahjong\Generation\Theme::trainable() as $option)
-                        <option value="{{ $option->value }}" @selected($this->theme() === $option)>{{ $option->label() }} : {{ $option->gloss() }}</option>
-                    @endforeach
-                </optgroup>
-            </select>
-            <noscript><button type="submit" class="btn btn-quiet">{{ __('Changer') }}</button></noscript>
-        </form>
+        @include('livewire.training.picker', [
+            'current' => $drill !== null ? \App\Training\Drill::from($drill) : null,
+            'theme' => $this->theme(),
+            'level' => $this->level(),
+        ])
     @endif
 
     @include('livewire.training.table')

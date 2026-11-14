@@ -12,9 +12,14 @@ final class SeededRandom
 {
     private Randomizer $randomizer;
 
-    public function __construct(Seed $seed)
+    /**
+     * @param  string  $stream  un flux à part, tiré de la même graine : ce qu'on y tire ne change pas la main
+     */
+    public function __construct(Seed $seed, string $stream = '')
     {
-        $this->randomizer = new Randomizer(new Xoshiro256StarStar(hash('sha256', $seed->value, true)));
+        $key = $stream === '' ? $seed->value : $seed->value."\0".$stream;
+
+        $this->randomizer = new Randomizer(new Xoshiro256StarStar(hash('sha256', $key, true)));
     }
 
     /**

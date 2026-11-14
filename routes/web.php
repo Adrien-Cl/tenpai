@@ -1,20 +1,25 @@
 <?php
 
 use App\Http\Controllers\DailyController;
+use App\Http\Controllers\FormerCountingController;
 use App\Http\Controllers\HandPreviewController;
 use App\Http\Controllers\HomeController;
 use App\Http\Controllers\RulesController;
 use App\Http\Controllers\ScoringController;
 use App\Http\Controllers\TileSpriteController;
 use App\Http\Controllers\TrainingController;
+use App\Http\Controllers\WaitsController;
 use App\Http\Middleware\SetLocale;
+use App\Livewire\Readings;
 use App\Livewire\Training;
+use App\Livewire\Waits;
 use App\Support\Locale;
+use App\Training\Drill;
 use Illuminate\Support\Facades\Route;
 
 /*
-| Les pages, une fois par langue : le français sans préfixe (noms « training »…),
-| l'anglais sous /en avec ses propres mots (noms « en.training »…).
+| Les pages, une fois par langue : le français sans préfixe (noms « counting »…),
+| l'anglais sous /en avec ses propres mots (noms « en.counting »…).
 */
 
 $seed = '[A-Za-z0-9][A-Za-z0-9-]{0,39}';
@@ -26,14 +31,27 @@ foreach (Locale::LOCALES as $locale => $words) {
         ->group(function () use ($words, $seed): void {
             Route::get('/', HomeController::class)->name('home');
 
-            Route::get("/{$words['training']}", TrainingController::class)->name('training');
+            Route::get("/{$words['counting']}", TrainingController::class)->name('counting');
 
-            Route::livewire("/{$words['training']}/{seed}", Training::class)
+            Route::livewire("/{$words['counting']}/{seed}", Training::class)
                 ->where('seed', $seed)
-                ->name('training.hand');
+                ->name('counting.hand');
+
+            Route::get("/{$words['formerCounting']}/{seed?}", FormerCountingController::class)
+                ->where('seed', $seed);
+
+            Route::get("/{$words['waits']}", WaitsController::class)->name('waits');
+
+            Route::livewire("/{$words['waits']}/{seed}", Waits::class)
+                ->where('seed', $seed)
+                ->name('waits.hand');
+
+            Route::livewire("/{$words['drill']}/{$words['readings']}/{seed}", Readings::class)
+                ->where('seed', $seed)
+                ->name('readings.hand');
 
             Route::livewire("/{$words['drill']}/{drill}/{seed}", Training::class)
-                ->whereIn('drill', array_keys(Training::DRILLS))
+                ->whereIn('drill', array_map(fn (Drill $drill): string => $drill->value, Drill::steps()))
                 ->where('seed', $seed)
                 ->name('drill.hand');
 

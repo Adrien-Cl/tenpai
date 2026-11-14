@@ -17,6 +17,8 @@ final readonly class Hand
      * @param  list<int>  $dora  indicateurs de dora (un de plus par kan)
      * @param  list<int>  $ura  indicateurs d'ura-dora (révélés après un riichi)
      * @param  int  $aka  nombre de cinq rouges dans la main
+     * @param  int  $honba  honba posés sur la table (compteur de mains rejouées)
+     * @param  int  $riichiSticks  bâtons de riichi sur la table, celui du gagnant compris
      */
     public function __construct(
         public array $closed,
@@ -34,7 +36,35 @@ final readonly class Hand
         public array $dora = [],
         public array $ura = [],
         public int $aka = 0,
+        public int $honba = 0,
+        public int $riichiSticks = 0,
     ) {}
+
+    /**
+     * La même main, avec d'autres honba et bâtons de riichi sur la table.
+     */
+    public function withTable(int $honba, int $riichiSticks): self
+    {
+        return new self(
+            closed: $this->closed,
+            melds: $this->melds,
+            win: $this->win,
+            tsumo: $this->tsumo,
+            seat: $this->seat,
+            round: $this->round,
+            riichi: $this->riichi,
+            doubleRiichi: $this->doubleRiichi,
+            ippatsu: $this->ippatsu,
+            haitei: $this->haitei,
+            rinshan: $this->rinshan,
+            chankan: $this->chankan,
+            dora: $this->dora,
+            ura: $this->ura,
+            aka: $this->aka,
+            honba: $honba,
+            riichiSticks: $riichiSticks,
+        );
+    }
 
     /**
      * Fermée : aucun appel, sauf des kan fermés.

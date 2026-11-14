@@ -1,5 +1,6 @@
 <?php
 
+use App\Domain\Mahjong\Generation\Level;
 use App\Domain\Mahjong\Generation\Theme;
 use App\Domain\Mahjong\Hand\MeldType;
 use App\Domain\Mahjong\Limit;
@@ -9,7 +10,6 @@ use App\Domain\Mahjong\Wait;
 use App\Domain\Mahjong\Wind;
 use App\Domain\Mahjong\Yaku;
 use App\Domain\Mahjong\Yakuman;
-use App\Livewire\Training;
 use App\Support\ScriptText;
 use App\Support\TableRules;
 use App\View\Season;
@@ -86,6 +86,7 @@ function engineTranslationKeys(): array
         array_map(fn (MeldType $meld) => $meld->label(), MeldType::cases());
         array_map(fn (Wind $wind) => $wind->label(), Wind::cases());
         array_map(fn (Theme $theme) => [$theme->label(), $theme->gloss()], Theme::cases());
+        array_map(fn (Level $level) => [$level->label(), $level->gloss()], Level::cases());
 
         for ($tile = 0; $tile < Tile::COUNT; $tile++) {
             Tile::name($tile, red: true);
@@ -99,7 +100,7 @@ function engineTranslationKeys(): array
 }
 
 /**
- * Les phrases passées par variable : options des règles, exercices, saisons, textes du JavaScript.
+ * Les phrases passées par variable : options des règles, saisons, textes du JavaScript.
  *
  * @return list<string>
  */
@@ -109,10 +110,6 @@ function dynamicTranslationKeys(): array
 
     foreach (TableRules::OPTIONS as [, $label, $help]) {
         array_push($keys, $label, $help);
-    }
-
-    foreach (Training::DRILLS as ['label' => $label]) {
-        $keys[] = $label;
     }
 
     app()->setLocale('fr');

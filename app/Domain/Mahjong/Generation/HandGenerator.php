@@ -19,18 +19,25 @@ use RuntimeException;
  *
  * La main ne dépend que de la graine : les cinq rouges sont toujours tirés, et le tri
  * des mains se fait avec les règles par défaut. Les règles du joueur ne servent qu'au compte.
+ * Les honba et les bâtons de riichi sont tirés à part : ils ne changent pas la main.
  */
 final class HandGenerator
 {
     private const int MAX_ATTEMPTS = 2000;
 
-    public function generate(Seed $seed): GeneratedHand
+    /**
+     * @param  (callable(GeneratedHand, Evaluation): bool)|null  $accept  condition de plus sur la main (exercices)
+     *
+     * @throws RuntimeException si aucune main ne convient
+     */
+    public function generate(Seed $seed, ?callable $accept = null): GeneratedHand
     {
         $random = new SeededRandom($seed);
         $builder = new ThemeBuilder($random);
+        $level = $seed->level();
 
         for ($attempt = 0; $attempt < self::MAX_ATTEMPTS; $attempt++) {
-            $result = $this->attempt($seed, $random, $builder);
+            $result = $this->attempt($seed, $random, $builder, $level);
 
             if ($result === null) {
                 continue;
@@ -43,17 +50,57 @@ final class HandGenerator
                 continue;
             }
 
-            return $generated;
+            // Débutant : une seule façon de lire la main. Expert : plusieurs, le plus souvent.
+            if ($level === Level::Beginner && $evaluation->multiple && $attempt < 1500) {
+                continue;
+            }
+
+            if ($level === Level::Expert && ! $evaluation->multiple && $attempt < 1000 && $random->chance(0.6)) {
+                continue;
+            }
+
+            if ($accept !== null && ! $accept($generated, $evaluation)) {
+                continue;
+            }
+
+            return $generated->withHand($this->table($seed, $generated->hand));
         }
 
         throw new RuntimeException("Génération impossible pour la graine « {$seed} ».");
     }
 
     /**
+     * Les honba et les bâtons de riichi sur la table, tirés sur un flux à part.
+     * Le bâton du gagnant est sur la table s'il a déclaré riichi.
+     */
+    private function table(Seed $seed, Hand $hand): Hand
+    {
+        $random = new SeededRandom($seed, 'table');
+        $roll = $random->float();
+        $honba = match (true) {
+            $roll < 0.55 => 0,
+            $roll < 0.8 => 1,
+            $roll < 0.92 => 2,
+            $roll < 0.97 => 3,
+            default => 4,
+        };
+
+        $roll = $random->float();
+        $others = match (true) {
+            $roll < 0.6 => 0,
+            $roll < 0.9 => 1,
+            default => 2,
+        };
+
+        return $hand->withTable($honba, $others + ($hand->riichi ? 1 : 0));
+    }
+
+    /**
      * @return array{GeneratedHand, Evaluation}|null
      */
-    private function attempt(Seed $seed, SeededRandom $random, ThemeBuilder $builder): ?array
+    private function attempt(Seed $seed, SeededRandom $random, ThemeBuilder $builder, Level $level): ?array
     {
+        $odds = $level->odds();
         $seat = Wind::from($random->int(4));
         $round = $random->chance(0.65) ? Wind::East : Wind::South;
         $theme = $seed->theme() ?? Theme::pick($random);
@@ -89,8 +136,8 @@ final class HandGenerator
                 $keptClosed = in_array($index, $draft->keepClosed, true);
 
                 if (in_array($index, $openIndexes, true)) {
-                    $melds[] = $this->openMeld($random, $group, $used);
-                } elseif ($group->isSet() && $used[$group->tile] === 3 && ! $keptClosed && $random->chance(0.08)) {
+                    $melds[] = $this->openMeld($random, $group, $used, $odds['openKan']);
+                } elseif ($group->isSet() && $used[$group->tile] === 3 && ! $keptClosed && $random->chance($odds['closedKan'])) {
                     $melds[] = new Meld(MeldType::ClosedKan, $group->tile);
                     $used[$group->tile]++;
                 } else {
@@ -108,18 +155,18 @@ final class HandGenerator
         $kans = count(array_filter($melds, fn (Meld $meld): bool => $meld->type->isKan()));
         $tsumo = $random->chance(0.45);
         $riichi = $menzen && $random->chance(0.68);
-        $doubleRiichi = $riichi && $random->chance(0.07);
-        $rinshan = $tsumo && $kans > 0 && $random->chance(0.3);
+        $doubleRiichi = $riichi && $random->chance($odds['doubleRiichi']);
+        $rinshan = $tsumo && $kans > 0 && $random->chance($odds['rinshan']);
 
         // Chankan : les trois autres exemplaires de la tuile gagnante sont dans le pon d'un adversaire.
-        $chankan = ! $tsumo && $used[$win] === 1 && $random->chance(0.1);
+        $chankan = ! $tsumo && $used[$win] === 1 && $random->chance($odds['chankan']);
 
         if ($chankan) {
             $used[$win] = 4;
         }
 
-        $ippatsu = $riichi && ! $rinshan && $random->chance(0.14);
-        $haitei = ! $rinshan && ! $chankan && $random->chance(0.04);
+        $ippatsu = $riichi && ! $rinshan && $random->chance($odds['ippatsu']);
+        $haitei = ! $rinshan && ! $chankan && $random->chance($odds['haitei']);
 
         $dora = [];
         $ura = [];
@@ -231,13 +278,13 @@ final class HandGenerator
     /**
      * @param  array<int, int>  $used
      */
-    private function openMeld(SeededRandom $random, Group $group, array &$used): Meld
+    private function openMeld(SeededRandom $random, Group $group, array &$used, float $kanChance): Meld
     {
         if ($group->isSequence()) {
             return new Meld(MeldType::Chi, $group->tile);
         }
 
-        if ($used[$group->tile] === 3 && $random->chance(0.15)) {
+        if ($used[$group->tile] === 3 && $random->chance($kanChance)) {
             $used[$group->tile]++;
 
             return new Meld(MeldType::OpenKan, $group->tile);

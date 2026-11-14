@@ -69,6 +69,9 @@
             @else
                 {{ __('par non-donneur / par le donneur, :total au total', ['total' => $fmt($payment->total)]) }}
             @endif
+            @if ($payment->hasBonus())
+                <br>{{ __('Avec les honba et les bâtons de riichi de la table : :gain gagnés en tout.', ['gain' => $fmt($payment->gain())]) }}
+            @endif
         </p>
     </div>
 

@@ -26,6 +26,10 @@
     </div>
 </fieldset>
 
+@if ($tableLine = \App\Training\Steps\PointsStep::tableLine($hand))
+    <p class="mb-2 text-sm text-ink-muted">{{ __('Sur la table : :line.', ['line' => mb_lcfirst($tableLine)]) }}</p>
+@endif
+
 <div>
     @foreach (\App\Training\Steps\PointsStep::fields($hand) as $key => $f)
         <x-answer-row wire:key="points-{{ $key }}" :id="'f-points-'.$key" :model="'answers.points.'.$key" :title="$f['label']" :sub="$f['sub']" :field="$fields[$key] ?? null" />

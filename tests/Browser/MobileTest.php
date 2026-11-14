@@ -4,7 +4,7 @@ it('ne défile pas horizontalement sur téléphone', function (string $url) {
     visit($url)->on()->mobile()
         ->assertScript('document.documentElement.scrollWidth <= window.innerWidth')
         ->assertNoJavaScriptErrors();
-})->with(['/', '/bareme', '/defi', '/entrainement/tenpai', '/exercice/fu/tenpai', '/en/training/tenpai']);
+})->with(['/', '/bareme', '/defi', '/comptage/tenpai', '/exercice/fu/tenpai', '/exercice/lectures/tenpai', '/attentes/tenpai', '/en/counting/tenpai']);
 
 it('ouvre le menu sur téléphone et mène au barème', function () {
     $page = visit('/')->on()->mobile();

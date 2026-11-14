@@ -24,6 +24,14 @@ final readonly class GeneratedHand
     ) {}
 
     /**
+     * La même main affichée, avec une autre situation (honba et bâtons de riichi).
+     */
+    public function withHand(Hand $hand): self
+    {
+        return new self($this->seed, $this->theme, $hand, $this->handTiles, $this->winTile, $this->melds);
+    }
+
+    /**
      * Toutes les tuiles visibles, pour compter les exemplaires : main, appels et indicateurs.
      *
      * @return list<int>
@@ -63,6 +71,8 @@ final readonly class GeneratedHand
             'dora' => $hand->dora,
             'ura' => $hand->ura,
             'aka' => $hand->aka,
+            'honba' => $hand->honba,
+            'riichiSticks' => $hand->riichiSticks,
             'handTiles' => array_map(fn (TileInstance $tile): string => $tile->tile.($tile->red ? 'r' : ''), $this->handTiles),
             'winTile' => $this->winTile->tile.($this->winTile->red ? 'r' : ''),
             'meldViews' => array_map(fn (MeldView $meld): string => $meld->type->value.':'.$meld->tile.'@'.($meld->rotated ?? '-'), $this->melds),

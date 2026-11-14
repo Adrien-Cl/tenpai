@@ -29,7 +29,7 @@ it('suit le schéma HTTPS annoncé par un reverse proxy de confiance', function 
 
     $this->withServerVariables(['REMOTE_ADDR' => '172.18.0.2'])
         ->withHeaders(['X-Forwarded-Proto' => 'https', 'X-Forwarded-Port' => '443'])
-        ->get('/entrainement/defi-2026-11-14')
+        ->get('/comptage/defi-2026-11-14')
         ->assertOk()
         ->assertHeader('Strict-Transport-Security')
         ->assertSee('data-update-uri="https://', false);
@@ -40,7 +40,7 @@ it('ignore les en-têtes de proxy d’un appelant qui n’est pas de confiance',
 
     $this->withServerVariables(['REMOTE_ADDR' => '203.0.113.7'])
         ->withHeaders(['X-Forwarded-Proto' => 'https'])
-        ->get('/entrainement/defi-2026-11-14')
+        ->get('/comptage/defi-2026-11-14')
         ->assertOk()
         ->assertHeaderMissing('Strict-Transport-Security')
         ->assertDontSee('data-update-uri="https://', false);

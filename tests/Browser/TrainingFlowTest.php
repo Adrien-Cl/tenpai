@@ -4,7 +4,7 @@ use App\Domain\Mahjong\Generation\Seed;
 use App\Training\TrainingHand;
 
 it('annonce un yaku au clavier, malgré une faute de frappe', function () {
-    $page = visit('/entrainement/tenpai');
+    $page = visit('/comptage/tenpai');
 
     $page->type('#yaku-search', 'richi')
         ->assertSee('déclaration')
@@ -17,7 +17,7 @@ it('annonce un yaku au clavier, malgré une faute de frappe', function () {
 it('mène une main jusqu’au récapitulatif et l’enregistre dans les progrès', function () {
     $evaluation = TrainingHand::fromSeed(Seed::fromString('tenpai'))->evaluation;
 
-    $page = visit('/entrainement/tenpai');
+    $page = visit('/comptage/tenpai');
 
     foreach (range(1, 5) as $step) {
         $page->click('Voir la réponse')
@@ -61,16 +61,39 @@ it('change les règles depuis l’en-tête', function () {
 });
 
 it('choisit un thème et tire une main de ce thème', function () {
-    $page = visit('/entrainement/tenpai');
+    $page = visit('/comptage/tenpai');
 
-    $page->select('theme', 'chinitsu')
-        ->assertPathBeginsWith('/entrainement/chinitsu-')
-        ->assertSelected('theme', 'chinitsu')
+    $page->assertMissing('#picker-themes')
+        ->click('[aria-controls="picker-themes"]')
+        ->assertVisible('#picker-themes')
+        ->click('#picker-themes a[href*="theme=chinitsu"]')
+        ->assertPathBeginsWith('/comptage/chinitsu-')
+        ->assertSee('Thème Chinitsu')
+        ->assertNoJavaScriptErrors();
+});
+
+it('passe en exercice court et en expert d’un clic, sans liste déroulante', function () {
+    $page = visit('/comptage/tenpai');
+
+    $page->click('[data-picker] a[href*="exercice=fu"]')
+        ->assertPathBeginsWith('/exercice/fu/')
+        ->click('[data-picker] a[href*="niveau=expert"]')
+        ->assertPathBeginsWith('/exercice/fu/expert-')
+        ->assertSee('Étape 4 sur 5')
+        ->assertNoJavaScriptErrors();
+});
+
+it('ouvre l’exercice des attentes depuis le menu', function () {
+    $page = visit('/');
+
+    $page->click('header nav a[href$="/attentes"]')
+        ->assertPathBeginsWith('/attentes/')
+        ->assertSee('Quelles tuiles complètent la main ?')
         ->assertNoJavaScriptErrors();
 });
 
 it('parle anglais jusque dans les messages du JavaScript', function () {
-    $page = visit('/en/training/tenpai');
+    $page = visit('/en/counting/tenpai');
 
     $page->assertSee('Which yaku?')
         ->type('#yaku-search', 'dora')

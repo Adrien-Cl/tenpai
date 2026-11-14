@@ -2,6 +2,7 @@
 
 use App\Domain\Mahjong\Generation\GeneratedHand;
 use App\Domain\Mahjong\Generation\HandGenerator;
+use App\Domain\Mahjong\Generation\Level;
 use App\Domain\Mahjong\Generation\Seed;
 use App\Domain\Mahjong\Generation\Theme;
 use App\Domain\Mahjong\Generation\TileInstance;
@@ -99,3 +100,59 @@ it('tire pour chaque thème une main qui contient le yaku visé', function (Them
             ->not->toBeEmpty("Graine {$theme->value}-test{$i} : aucun yaku du thème.");
     }
 })->with(fn () => array_map(fn (Theme $theme) => [$theme], Theme::trainable()));
+
+it('garde le niveau dans la graine, devant le thème', function () {
+    $seed = Seed::themed(Theme::Chinitsu, Level::Expert);
+
+    expect($seed->value)->toMatch('/^expert-chinitsu-[a-z0-9]{8}$/')
+        ->and($seed->level())->toBe(Level::Expert)
+        ->and($seed->theme())->toBe(Theme::Chinitsu)
+        ->and(Seed::themed(Theme::Free, Level::Beginner)->value)->toMatch('/^debutant-[a-z0-9]{8}$/')
+        ->and(Seed::fromString('debutant-abcd2345')->theme())->toBeNull()
+        ->and(Seed::fromString('chinitsu-abcd2345')->level())->toBe(Level::Standard)
+        ->and(Seed::fromString('defi-2026-11-13')->level())->toBe(Level::Standard)
+        ->and(Seed::themed(Theme::Tanyao)->value)->toMatch('/^tanyao-[a-z0-9]{8}$/');
+});
+
+it('tire des mains de débutant sans kan, sans situation rare et à une seule lecture', function () {
+    for ($i = 0; $i < 60; $i++) {
+        $hand = generate(sprintf('debutant-test%04d', $i))->hand;
+
+        expect($hand->kanCount())->toBe(0)
+            ->and([$hand->doubleRiichi, $hand->ippatsu, $hand->haitei, $hand->rinshan, $hand->chankan])->each->toBeFalse()
+            ->and(Evaluator::evaluate($hand, Rules::default())->multiple)->toBeFalse();
+    }
+});
+
+it('tire plus de kan et de mains à plusieurs lectures au niveau expert', function () {
+    $count = function (string $prefix): array {
+        $kans = 0;
+        $multiple = 0;
+
+        for ($i = 0; $i < 120; $i++) {
+            $hand = generate(sprintf('%stest%04d', $prefix, $i))->hand;
+            $kans += $hand->kanCount() > 0 ? 1 : 0;
+            $multiple += Evaluator::evaluate($hand, Rules::default())->multiple ? 1 : 0;
+        }
+
+        return [$kans, $multiple];
+    };
+
+    [$standardKans, $standardMultiple] = $count('');
+    [$expertKans, $expertMultiple] = $count('expert-');
+
+    expect($expertKans)->toBeGreaterThan($standardKans)
+        ->and($expertMultiple)->toBeGreaterThan($standardMultiple);
+});
+
+it('pose honba et bâtons de riichi sans changer la main', function () {
+    $hands = array_map(fn (int $i) => generate(sprintf('test%04d', $i))->hand, range(0, 79));
+
+    foreach ($hands as $hand) {
+        expect($hand->honba)->toBeBetween(0, 4)
+            ->and($hand->riichiSticks)->toBeBetween($hand->riichi ? 1 : 0, $hand->riichi ? 3 : 2);
+    }
+
+    expect(array_filter($hands, fn ($hand) => $hand->honba > 0))->not->toBeEmpty()
+        ->and(generate('tenpai')->hand->honba)->toBe(generate('tenpai')->hand->honba);
+});
