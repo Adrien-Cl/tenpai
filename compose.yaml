@@ -1,0 +1,39 @@
+services:
+  app:
+    build:
+      context: .
+      target: app
+    image: tenpai:latest
+    restart: unless-stopped
+    ports:
+      - "${APP_PORT:-8000}:80"
+    environment:
+      APP_NAME: Tenpai
+      APP_ENV: production
+      APP_DEBUG: "false"
+      # Laissée vide, une clé est générée au premier démarrage et gardée dans le volume « data ».
+      APP_KEY: ${APP_KEY:-}
+      APP_URL: ${APP_URL:-http://localhost:8000}
+      APP_LOCALE: fr
+      APP_FALLBACK_LOCALE: fr
+      LOG_CHANNEL: stderr
+      LOG_LEVEL: ${LOG_LEVEL:-info}
+      DB_CONNECTION: sqlite
+      DB_DATABASE: /data/database.sqlite
+      SESSION_DRIVER: file
+      CACHE_STORE: file
+      QUEUE_CONNECTION: sync
+      MAIL_MAILER: log
+    volumes:
+      - data:/data
+      - storage:/var/www/html/storage
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://localhost/up"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 20s
+
+volumes:
+  data:
+  storage:
