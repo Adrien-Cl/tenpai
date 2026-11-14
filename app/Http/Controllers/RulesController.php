@@ -20,6 +20,17 @@ class RulesController extends Controller
 
         $rules = TableRules::fromArray(array_combine($keys, array_map(fn (string $key): bool => $request->boolean($key), $keys)));
 
-        return back()->withCookie(cookie()->forever(TableRules::COOKIE, json_encode(TableRules::toArray($rules))));
+        return redirect($this->previousPage($request))
+            ->withCookie(cookie()->forever(TableRules::COOKIE, json_encode(TableRules::toArray($rules))));
+    }
+
+    /**
+     * La page d'où vient le formulaire, si elle est sur ce site ; l'accueil sinon.
+     */
+    private function previousPage(Request $request): string
+    {
+        $previous = url()->previous();
+
+        return parse_url($previous, PHP_URL_HOST) === $request->getHost() ? $previous : localized_route('home');
     }
 }

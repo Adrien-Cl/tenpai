@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Middleware\SecurityHeaders;
 use App\View\Backdrop;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
@@ -15,6 +16,11 @@ return Application::configure(basePath: dirname(__DIR__))
     ->withMiddleware(function (Middleware $middleware): void {
         // Le fond est choisi et écrit par le JavaScript, sans passer par le serveur.
         $middleware->encryptCookies(except: [Backdrop::COOKIE]);
+
+        // Seul l'hôte d'APP_URL (et ses sous-domaines) est servi : les adresses absolues ne suivent pas un en-tête Host forgé.
+        $middleware->trustHosts();
+
+        $middleware->web(append: [SecurityHeaders::class]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         $exceptions->shouldRenderJsonWhen(

@@ -39,6 +39,7 @@ foreach (Locale::LOCALES as $locale => $words) {
 
             Route::get("/{$words['preview']}/{seed}.png", HandPreviewController::class)
                 ->where('seed', $seed)
+                ->middleware('throttle:preview')
                 ->name('preview');
 
             Route::get("/{$words['daily']}", DailyController::class)->name('daily');

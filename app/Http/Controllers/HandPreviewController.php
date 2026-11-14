@@ -13,6 +13,7 @@ class HandPreviewController extends Controller
 {
     /**
      * L'image d'aperçu d'une main partagée. Sans GD, l'image générale du site.
+     * Le serveur la garde un jour ; les navigateurs et les relais, une semaine.
      */
     public function __invoke(string $seed): Response|RedirectResponse
     {
@@ -25,7 +26,7 @@ class HandPreviewController extends Controller
         $seed = Seed::fromString($seed);
         $png = Cache::remember(
             'apercu:'.app()->getLocale().":{$seed->value}",
-            now()->addWeek(),
+            now()->addDay(),
             fn (): string => (new HandPreview)->render((new HandGenerator)->generate($seed)),
         );
 
