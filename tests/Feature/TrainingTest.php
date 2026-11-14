@@ -134,7 +134,8 @@ it('mène une main juste jusqu’au récapitulatif et annonce la fin', function 
             ->assertSet("results.{$index}.ok", true);
 
         if ($key === 'points') {
-            $component->assertDispatched('hand-finished', seed: 'tenpai', results: [true, true, true, true, true], daily: null);
+            $component->assertDispatched('hand-finished', seed: 'tenpai', results: [true, true, true, true, true], daily: null,
+                tiles: TrainingHand::fromSeed(Seed::fromString('tenpai'))->generated->tableCodes());
         }
 
         $component->call('next');

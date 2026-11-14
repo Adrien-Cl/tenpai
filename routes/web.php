@@ -3,6 +3,7 @@
 use App\Http\Controllers\DailyController;
 use App\Http\Controllers\FormerCountingController;
 use App\Http\Controllers\HandPreviewController;
+use App\Http\Controllers\HandTilesController;
 use App\Http\Controllers\HomeController;
 use App\Http\Controllers\RulesController;
 use App\Http\Controllers\ScoringController;
@@ -71,3 +72,7 @@ foreach (Locale::LOCALES as $locale => $words) {
 Route::post('/regles', RulesController::class)->name('rules');
 
 Route::get('/tuiles.svg', TileSpriteController::class)->name('tiles.sprite');
+
+Route::get('/mains.json', HandTilesController::class)
+    ->middleware('throttle:hands')
+    ->name('hands.tiles');

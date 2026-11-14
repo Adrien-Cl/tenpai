@@ -176,28 +176,47 @@
                 </ul>
 
                 {{-- Ce qui reste à travailler : les mains ratées, à refaire, et les yaku oubliés. --}}
-                <div class="mt-10 grid gap-8 sm:grid-cols-2"
-                     x-data="{
-                         labels: @js(collect(\App\Domain\Mahjong\Yaku::cases())->mapWithKeys(fn ($yaku) => [$yaku->value => $yaku->shortLabel()])),
+                <div class="mt-10 space-y-10"
+                     x-data="reviewList({
+                         sprite: @js($sprite),
                          url: @js(localized_route('counting.hand', ['seed' => 'SEED'])),
-                     }"
+                         tilesUrl: @js(route('hands.tiles', absolute: false)),
+                         yaku: @js(collect(\App\Domain\Mahjong\Yaku::cases())->mapWithKeys(fn ($yaku) => [$yaku->value => $yaku->shortLabel()])),
+                         captions: @js([
+                             'themes' => collect(\App\Domain\Mahjong\Generation\Theme::cases())->mapWithKeys(fn ($theme) => [$theme->value => $theme->label()]),
+                             'levels' => collect(\App\Domain\Mahjong\Generation\Level::cases())->mapWithKeys(fn ($level) => [$level->value => $level->label()]),
+                             'free' => \App\Domain\Mahjong\Generation\Theme::Free->label(),
+                             'daily' => __('Défi du :day'),
+                         ]),
+                     })"
                      x-show="$store.progress.review.length || $store.progress.mostMissed().length">
+                    {{-- Chaque main ratée telle qu'elle était sur la table, avec les étapes à reprendre. --}}
                     <div x-show="$store.progress.review.length">
                         <h3 class="display text-xl">{{ __('À revoir') }}</h3>
                         <p class="mt-1 text-sm text-ink-muted">{{ __('Une main refaite sans faute quitte la liste.') }}</p>
-                        <ul class="mt-3 flex flex-wrap gap-2">
-                            <template x-for="entry in $store.progress.toReview.slice(0, 8)" :key="entry.seed">
+                        <ul class="mt-4 grid gap-3 sm:grid-cols-2">
+                            <template x-for="entry in entries" :key="entry.seed">
                                 <li>
-                                    <a :href="url.replace('SEED', entry.seed)"
-                                       class="flex items-baseline gap-2 rounded-lg bg-paper-sunk px-3 py-1.5 text-sm shadow-[inset_0_0_0_1px_var(--paper-line)] transition-colors hover:bg-ink hover:text-paper">
-                                        <span class="font-mono" x-text="entry.seed"></span>
-                                        <span class="num text-ko" x-text="entry.score + '/5'"></span>
+                                    <a :href="link(entry)"
+                                       class="@container flex h-full flex-col rounded-lg bg-paper-sunk px-3.5 pt-2.5 pb-3 shadow-[inset_0_0_0_1px_var(--paper-line)] transition-shadow hover:shadow-[inset_0_0_0_2px_var(--ink)]">
+                                        <span class="flex items-baseline justify-between gap-3 text-sm">
+                                            <span class="font-bold" x-text="caption(entry)"></span>
+                                            <span class="num font-bold text-ko"><span x-text="entry.score"></span>/5</span>
+                                        </span>
+                                        <span class="mt-3 flex flex-wrap items-end gap-x-1.5 gap-y-2.5 [--tile:clamp(0.8rem,calc((100cqi-1.5rem)/16.5),1.3rem)]" aria-hidden="true"
+                                              x-show="entry.tiles" x-html="handHtml(entry)"></span>
+                                        <span class="mt-1 block font-mono text-sm text-ink-muted" x-show="!entry.tiles" x-text="entry.seed"></span>
+                                        <span class="mt-auto flex flex-wrap gap-1 pt-3 text-xs" x-show="Array.isArray(entry.steps)">
+                                            @foreach ($steps as $index => [, $name])
+                                                <span class="rounded px-1.5 py-0.5" :class="entry.steps?.[{{ $index }}] ? 'text-ink-faint' : 'bg-ko-soft font-bold text-ko'">{{ $name }}<span class="sr-only" x-show="!entry.steps?.[{{ $index }}]"> ({{ __('raté') }})</span></span>
+                                            @endforeach
+                                        </span>
                                     </a>
                                 </li>
                             </template>
                         </ul>
                     </div>
-                    <div x-show="$store.progress.mostMissed().length">
+                    <div class="max-w-md" x-show="$store.progress.mostMissed().length">
                         <h3 class="display text-xl">{{ __('Yaku oubliés') }}</h3>
                         <p class="mt-1 text-sm text-ink-muted">{{ __('Ceux que vous laissez passer le plus souvent.') }}</p>
                         <ol class="mt-3 space-y-1.5">

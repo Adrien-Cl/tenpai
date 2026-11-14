@@ -6,6 +6,7 @@ use App\Domain\Mahjong\Generation\Level;
 use App\Domain\Mahjong\Generation\Seed;
 use App\Domain\Mahjong\Generation\Theme;
 use App\Domain\Mahjong\Generation\TileInstance;
+use App\Domain\Mahjong\Hand\MeldType;
 use App\Domain\Mahjong\Rules;
 use App\Domain\Mahjong\Scoring\Evaluator;
 use App\Domain\Mahjong\Tile;
@@ -155,4 +156,35 @@ it('pose honba et bâtons de riichi sans changer la main', function () {
 
     expect(array_filter($hands, fn ($hand) => $hand->honba > 0))->not->toBeEmpty()
         ->and(generate('tenpai')->hand->honba)->toBe(generate('tenpai')->hand->honba);
+});
+
+it('abrège les tuiles posées sur la table, appels compris', function () {
+    $closedKan = $calledTile = false;
+
+    for ($i = 0; $i < 300; $i++) {
+        $generated = generate("expert-controle-{$i}");
+        $codes = $generated->tableCodes();
+
+        expect($codes['hand'])->toHaveCount(count($generated->handTiles))
+            ->and($codes['win'])->toBe($generated->winTile->tile.($generated->winTile->red ? 'r' : ''))
+            ->and($codes['melds'])->toHaveCount(count($generated->melds));
+
+        foreach ($generated->melds as $m => $meld) {
+            $meldCodes = $codes['melds'][$m];
+
+            expect($meldCodes)->toHaveCount(count($meld->tiles));
+
+            if ($meld->type === MeldType::ClosedKan) {
+                $closedKan = true;
+                expect($meldCodes[0])->toBe('x')->and($meldCodes[3])->toBe('x');
+            }
+
+            if ($meld->rotated !== null) {
+                $calledTile = true;
+                expect($meldCodes[$meld->rotated])->toStartWith('s');
+            }
+        }
+    }
+
+    expect($closedKan)->toBeTrue()->and($calledTile)->toBeTrue();
 });

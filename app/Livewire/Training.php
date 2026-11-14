@@ -250,6 +250,7 @@ class Training extends Component
                 drill: $this->drill,
                 first: $this->firstStep(),
                 missed: $this->missedYaku(),
+                tiles: $this->hand->generated->tableCodes(),
             );
         }
     }
