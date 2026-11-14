@@ -199,6 +199,10 @@ jobs:
         with:
           persist-credentials: false
 
+      # En production, ce réseau appartient au reverse proxy ; compose exige qu'il existe déjà.
+      - name: Créer le réseau du reverse proxy
+        run: docker network create proxy
+
       - name: Construire et démarrer la stack
         run: docker compose up --detach --build --wait --wait-timeout 120
 

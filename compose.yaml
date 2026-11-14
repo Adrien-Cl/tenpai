@@ -28,6 +28,8 @@ services:
     volumes:
       - data:/data
       - storage:/var/www/html/storage
+    networks:
+      - proxy
     healthcheck:
       # La requête porte l'hôte d'APP_URL : en production, trustHosts() refuse tout autre hôte, dont « localhost ».
       test: ["CMD-SHELL", "host=$${APP_URL#*://}; curl -fsS -o /dev/null -H \"Host: $${host%%/*}\" http://127.0.0.1/up"]
@@ -39,3 +41,9 @@ services:
 volumes:
   data:
   storage:
+
+networks:
+  # Réseau partagé avec le reverse proxy, créé hors du projet : docker network create proxy
+  proxy:
+    external: true
+    name: ${PROXY_NETWORK:-proxy}
