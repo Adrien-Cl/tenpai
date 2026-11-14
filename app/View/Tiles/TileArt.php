@@ -6,7 +6,7 @@ use App\Domain\Mahjong\Tile;
 
 /**
  * Le dessin des tuiles, porté du tiles.js de la référence (mêmes coordonnées, mêmes encres),
- * dans un repère de 30 × 40. Les caractères sont des tracés (voir Glyphs), pas du texte.
+ * dans un repère de 30 × 40. Les caractères sont des tracés (voir TileGlyphs), pas du texte.
  *
  * Tout est rassemblé dans un sprite SVG : chaque tuile de la page y fait référence avec <use>.
  */
@@ -101,8 +101,7 @@ final class TileArt
         }
 
         if ($tile === Tile::HAKU) {
-            return '<rect x="6.5" y="7.5" width="17" height="25" rx="1.6" fill="none" stroke="'.self::BLUE.'" stroke-width="1.8"/>'
-                .'<rect x="9.2" y="10.2" width="11.6" height="19.6" rx=".8" fill="none" stroke="'.self::BLUE.'" stroke-width=".7"/>';
+            return '';
         }
 
         $char = mb_substr('東南西北白發中', $tile - 27, 1);
@@ -123,7 +122,7 @@ final class TileArt
         $sx = self::r($scaleX * $size / 100, 4);
         $sy = self::r($scaleY * $size / 100, 4);
 
-        return "<path transform=\"translate({$centerX} {$baseline}) scale({$sx} {$sy}) translate(-50 -88)\" fill=\"{$fill}\" d=\"".Glyphs::PATHS[$char].'"/>';
+        return "<path transform=\"translate({$centerX} {$baseline}) scale({$sx} {$sy}) translate(-50 -88)\" fill=\"{$fill}\" d=\"".TileGlyphs::PATHS[$char].'"/>';
     }
 
     /**
@@ -211,26 +210,17 @@ final class TileArt
     }
 
     /**
-     * Cercle de pin : filet extérieur, large anneau perlé, cœur plein.
+     * Cercle de pin : anneau plat autour d'une pastille percée en son centre.
      */
     private static function pinDot(float $x, float $y, float $r, string $color): string
     {
-        $pearlRadius = $r * 0.6;
-        $pearls = '';
-
-        for ($k = 0; $k < 12; $k++) {
-            $angle = $k * M_PI / 6;
-            $pearls .= '<circle cx="'.self::r($x + $pearlRadius * cos($angle)).'" cy="'.self::r($y + $pearlRadius * sin($angle)).'" r="'.self::r($r * 0.075).'" fill="'.self::FACE.'"/>';
-        }
-
-        return '<circle cx="'.$x.'" cy="'.$y.'" r="'.self::r($r * 0.93).'" fill="none" stroke="'.$color.'" stroke-width="'.self::r($r * 0.14).'"/>'
-            .'<circle cx="'.$x.'" cy="'.$y.'" r="'.self::r($pearlRadius).'" fill="none" stroke="'.$color.'" stroke-width="'.self::r($r * 0.34).'"/>'
-            .$pearls
-            .'<circle cx="'.$x.'" cy="'.$y.'" r="'.self::r($r * 0.2).'" fill="'.$color.'"/>';
+        return '<circle cx="'.$x.'" cy="'.$y.'" r="'.self::r($r * 0.84).'" fill="none" stroke="'.$color.'" stroke-width="'.self::r($r * 0.24).'"/>'
+            .'<circle cx="'.$x.'" cy="'.$y.'" r="'.self::r($r * 0.42).'" fill="'.$color.'"/>'
+            .'<circle cx="'.$x.'" cy="'.$y.'" r="'.self::r($r * 0.13).'" fill="'.self::FACE.'"/>';
     }
 
     /**
-     * Le 1 de cercles : grand médaillon, couronne de pétales autour d'un cercle perlé.
+     * Le 1 de cercles : grand médaillon, couronne de pétales autour d'un anneau rouge.
      */
     private static function pinOne(bool $red): string
     {
@@ -245,28 +235,37 @@ final class TileArt
         return '<circle cx="15" cy="20" r="12.4" fill="none" stroke="'.$edge.'" stroke-width="1.2"/>'
             .'<circle cx="15" cy="20" r="11" fill="none" stroke="'.$edge.'" stroke-width=".45"/>'
             .$petals
-            .self::pinDot(15, 20, 6.9, self::RED)
-            .'<circle cx="15" cy="20" r="1.4" fill="'.$edge.'"/>';
+            .self::pinDot(15, 20, 6.9, self::RED);
     }
 
     /**
-     * Tige de bambou : nœud central, renflements aux extrémités, reflet.
+     * Tige de bambou sculptée : fine, cintrée entre trois nœuds, avec un reflet.
      */
     private static function stick(float $x, float $y, float $height, string $color): string
     {
-        $width = 3.7;
+        $width = 3;
+        $pinch = 0.6;
         $top = self::r($y - $height / 2);
         $bottom = self::r($y + $height / 2);
         $left = self::r($x - $width / 2);
-        $capLeft = self::r($x - $width / 2 - 0.35);
-        $capWidth = self::r($width + 0.7);
+        $right = self::r($x + $width / 2);
+        $upperMiddle = self::r(($top + $y) / 2);
+        $lowerMiddle = self::r(($y + $bottom) / 2);
 
-        return '<rect x="'.$left.'" y="'.$top.'" width="'.$width.'" height="'.$height.'" rx="1.4" fill="'.$color.'"/>'
-            .'<rect x="'.$capLeft.'" y="'.$top.'" width="'.$capWidth.'" height="1.3" rx=".6" fill="'.$color.'"/>'
-            .'<rect x="'.$capLeft.'" y="'.self::r($bottom - 1.3).'" width="'.$capWidth.'" height="1.3" rx=".6" fill="'.$color.'"/>'
-            .'<rect x="'.self::r($x - $width / 2 - 0.3).'" y="'.self::r($y - 0.75).'" width="'.self::r($width + 0.6).'" height="1.5" rx=".7" fill="'.$color.'"/>'
-            .'<path d="M'.$x.' '.self::r($top + 1.8).'V'.self::r($y - 1.2).'M'.$x.' '.self::r($y + 1.2).'V'.self::r($bottom - 1.8).'" stroke="'.self::FACE.'" stroke-width=".55" opacity=".75"/>'
-            .'<path d="M'.$left.' '.self::r($y).'h'.$width.'" stroke="'.self::FACE.'" stroke-width=".35" opacity=".9"/>';
+        $body = "M{$left} {$top}Q".self::r($left + $pinch)." {$upperMiddle} {$left} {$y}Q".self::r($left + $pinch)." {$lowerMiddle} {$left} {$bottom}"
+            ."H{$right}Q".self::r($right - $pinch)." {$lowerMiddle} {$right} {$y}Q".self::r($right - $pinch)." {$upperMiddle} {$right} {$top}Z";
+
+        $nodes = '';
+
+        foreach ([$top + 0.55, $y, $bottom - 0.55] as $nodeY) {
+            $nodes .= '<rect x="'.self::r($x - ($width + 1.1) / 2).'" y="'.self::r($nodeY - 0.6).'" width="'.self::r($width + 1.1).'" height="1.2" rx=".6" fill="'.$color.'"/>';
+        }
+
+        $glint = self::r($x - 0.45);
+
+        return '<path d="'.$body.'" fill="'.$color.'"/>'
+            .$nodes
+            .'<path d="M'.$glint.' '.self::r($top + 1.7).'V'.self::r($y - 1.1).'M'.$glint.' '.self::r($y + 1.1).'V'.self::r($bottom - 1.7).'" stroke="'.self::FACE.'" stroke-width=".4" opacity=".6" stroke-linecap="round"/>';
     }
 
     /**
