@@ -6,7 +6,7 @@ use Livewire\Livewire;
 it('redirige vers la main du jour, à l’heure de Paris', function () {
     $this->travelTo(new DateTimeImmutable('2026-11-13 23:30:00', new DateTimeZone('UTC')));
 
-    $this->get('/defi')->assertRedirect('/entrainement/defi-2026-11-14');
+    $this->get('/defi')->assertRedirect('/comptage/defi-2026-11-14');
 });
 
 it('présente la main comme le défi du jour', function () {
@@ -31,7 +31,7 @@ it('donne au calendrier des défis le jour de Paris et l’adresse des mains pas
     $this->get('/')
         ->assertOk()
         ->assertSee('dailyCalendar({ today: \'2026-11-14\'', false)
-        ->assertSee('entrainement\/defi-DATE', false);
+        ->assertSee('comptage\/defi-DATE', false);
 });
 
 it('propose de partager le résultat à la fin du défi, et seulement du défi', function (string $seed, bool $daily) {

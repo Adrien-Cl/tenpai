@@ -53,15 +53,15 @@ function correctAnswers(string $seed): array
 }
 
 it('tire une graine au hasard et redirige vers elle', function () {
-    $response = $this->get('/entrainement');
+    $response = $this->get('/comptage');
 
     $response->assertRedirect();
-    expect($response->headers->get('Location'))->toMatch('#/entrainement/[a-z0-9]{8}$#');
+    expect($response->headers->get('Location'))->toMatch('#/comptage/[a-z0-9]{8}$#');
 });
 
 it('affiche la même main pour la même graine', function () {
-    $first = $this->get('/entrainement/k7f2qx9a')->assertOk()->getContent();
-    $second = $this->get('/entrainement/k7f2qx9a')->assertOk()->getContent();
+    $first = $this->get('/comptage/k7f2qx9a')->assertOk()->getContent();
+    $second = $this->get('/comptage/k7f2qx9a')->assertOk()->getContent();
 
     $hand = fn (string $html) => preg_match('/aria-label="Tuiles en main">(.*?)<\/span>\s*<span class="relative/s', $html, $m) ? $m[1] : null;
 
@@ -69,8 +69,8 @@ it('affiche la même main pour la même graine', function () {
 });
 
 it('refuse une graine invalide', function () {
-    $this->get('/entrainement/'.str_repeat('a', 41))->assertNotFound();
-    $this->get('/entrainement/pas_de_soulignés')->assertNotFound();
+    $this->get('/comptage/'.str_repeat('a', 41))->assertNotFound();
+    $this->get('/comptage/pas_de_soulignés')->assertNotFound();
 });
 
 it('valide une étape juste', function () {
@@ -134,7 +134,8 @@ it('mène une main juste jusqu’au récapitulatif et annonce la fin', function 
             ->assertSet("results.{$index}.ok", true);
 
         if ($key === 'points') {
-            $component->assertDispatched('hand-finished', seed: 'tenpai', results: [true, true, true, true, true], daily: null);
+            $component->assertDispatched('hand-finished', seed: 'tenpai', results: [true, true, true, true, true], daily: null,
+                tiles: TrainingHand::fromSeed(Seed::fromString('tenpai'))->generated->tableCodes());
         }
 
         $component->call('next');
@@ -158,36 +159,39 @@ it('passe à une nouvelle main', function () {
 });
 
 it('tire une main du thème demandé', function () {
-    $response = $this->get('/entrainement?theme=chinitsu');
+    $response = $this->get('/comptage?theme=chinitsu');
 
-    expect($response->headers->get('Location'))->toMatch('#/entrainement/chinitsu-[a-z0-9]{8}$#');
+    expect($response->headers->get('Location'))->toMatch('#/comptage/chinitsu-[a-z0-9]{8}$#');
 });
 
 it('tire une main libre pour un thème inconnu', function (string $theme) {
-    $response = $this->get('/entrainement?theme='.$theme);
+    $response = $this->get('/comptage?theme='.$theme);
 
-    expect($response->headers->get('Location'))->toMatch('#/entrainement/[a-z0-9]{8}$#');
+    expect($response->headers->get('Location'))->toMatch('#/comptage/[a-z0-9]{8}$#');
 })->with(['inconnu' => ['kokushi'], 'libre' => ['libre']]);
 
 it('annonce le thème de la main et le garde pour la main suivante', function () {
-    Livewire::test(Training::class, ['seed' => 'honitsu-test0001'])
-        ->assertSee('<option value="honitsu" selected>Honitsu : semi-pur</option>', false)
-        ->call('nextHand')
-        ->assertRedirectContains('/entrainement/honitsu-');
+    $component = Livewire::test(Training::class, ['seed' => 'honitsu-test0001']);
+
+    expect(currentLinks($component->html()))->toContain('Honitsu');
+
+    $component->call('nextHand')
+        ->assertRedirectContains('/comptage/honitsu-');
 });
 
 it('repart sur une main libre après une main libre', function () {
     $component = Livewire::test(Training::class, ['seed' => 'tenpai'])->call('nextHand');
 
-    expect($component->effects['redirect'])->toMatch('#/entrainement/[a-z0-9]{8}$#');
+    expect($component->effects['redirect'])->toMatch('#/comptage/[a-z0-9]{8}$#');
 });
 
 it('ouvre un exercice court à la bonne étape, les précédentes données', function (string $drill, int $first) {
     $component = Livewire::test(Training::class, ['seed' => 'tenpai', 'drill' => $drill])
         ->assertSet('step', $first)
         ->assertSet('view', $first)
-        ->assertSee('<option value="'.$drill.'" selected>', false)
         ->assertSee('0/'.(5 - $first));
+
+    expect(currentLinks($component->html()))->toContain($drill === 'fu' ? 'Fu et points 2 étapes' : 'Points seulement 1 étape');
 
     $results = $component->get('results');
 
@@ -219,7 +223,7 @@ it('compte un exercice court sans faute sur les seules étapes jouées', functio
 });
 
 it('redirige vers un exercice court, et garde l’exercice pour la main suivante', function () {
-    $response = $this->get('/entrainement?exercice=points&theme=pinfu');
+    $response = $this->get('/comptage?exercice=points&theme=pinfu');
 
     expect($response->headers->get('Location'))->toMatch('#/exercice/points/pinfu-[a-z0-9]{8}$#');
 
@@ -334,4 +338,58 @@ it('compte à 0 les dora laissés vides, mais pas le total des han', function ()
         ->set('answers.dora', [...$answers, 'han' => ''])
         ->call('check')
         ->assertSet('results.2.fields.han.state', 'ko');
+});
+
+it('tire une main du niveau demandé, avec le thème', function () {
+    $location = $this->get('/comptage?niveau=expert&theme=chinitsu')->assertRedirect()->headers->get('Location');
+
+    expect($location)->toMatch('#/comptage/expert-chinitsu-[a-z0-9]{8}$#')
+        ->and($this->get('/comptage?niveau=inconnu')->headers->get('Location'))->toMatch('#/comptage/[a-z0-9]{8}$#');
+});
+
+it('garde le niveau pour la main suivante et le marque comme choisi', function () {
+    $component = Livewire::test(Training::class, ['seed' => 'debutant-test0001']);
+
+    expect(currentLinks($component->html()))->toBe(['Main complète les cinq étapes', 'Débutant', 'Main libre']);
+
+    $component->call('nextHand')
+        ->assertRedirectContains('/comptage/debutant-');
+
+    Livewire::test(Training::class, ['seed' => 'expert-tanyao-test0001', 'drill' => 'fu'])
+        ->call('nextHand')
+        ->assertRedirectContains('/exercice/fu/expert-tanyao-');
+});
+
+it('propose les exercices de comptage en boutons, sans liste déroulante ni attentes', function () {
+    $response = $this->get('/comptage/expert-tanyao-test0001');
+
+    expect(currentLinks($response->getContent()))->toBe(['Comptage', 'Main complète les cinq étapes', 'Expert', 'Tanyao']);
+
+    $response
+        ->assertSee('href="'.e(route('counting', ['exercice' => 'fu', 'theme' => 'tanyao', 'niveau' => 'expert'])).'"', false)
+        ->assertSee('href="'.e(route('counting', ['exercice' => 'lectures', 'theme' => 'tanyao', 'niveau' => 'expert'])).'"', false)
+        ->assertSee('href="'.e(route('counting', ['theme' => 'chinitsu', 'niveau' => 'expert'])).'"', false)
+        ->assertSee('2 étapes')
+        ->assertSee('quel découpage compte')
+        ->assertDontSee('<select', false)
+        ->assertDontSee('les tuiles qui complètent la main');
+});
+
+it('nomme la page « Comptage » dans le menu', function () {
+    $response = $this->get('/comptage/tenpai');
+
+    expect(currentLinks($response->getContent()))->toContain('Comptage');
+
+    $response->assertSee('href="'.route('counting').'"', false)
+        ->assertDontSee('S’entraîner');
+});
+
+it('redirige les anciennes adresses de l’entraînement vers le comptage', function () {
+    $this->get('/entrainement/tenpai')->assertStatus(301)->assertRedirect('/comptage/tenpai');
+    $this->get('/entrainement')->assertStatus(301)->assertRedirect('/comptage');
+    $this->get('/entrainement?theme=chinitsu&niveau=expert')
+        ->assertStatus(301)
+        ->assertRedirect(route('counting', ['theme' => 'chinitsu', 'niveau' => 'expert']));
+    $this->get('/en/training/defi-2026-11-14')->assertStatus(301)->assertRedirect('/en/counting/defi-2026-11-14');
+    $this->get('/entrainement/pas_valide')->assertNotFound();
 });

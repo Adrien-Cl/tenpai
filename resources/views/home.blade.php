@@ -28,22 +28,22 @@
                     <span lang="ja" class="text-ink">聴牌</span>, {{ __('tenpai : il ne manque plus qu’une tuile. Ici, la main est déjà gagnée ; à vous de dire combien elle vaut. Chaque étape est corrigée et expliquée.') }}
                 </p>
                 <div class="mt-8 flex flex-wrap items-center gap-x-6 gap-y-4">
-                    <a href="{{ localized_route('training') }}" class="btn btn-primary h-14 px-7 text-lg" wire:navigate>{{ __('Commencer une main') }}</a>
+                    <a href="{{ localized_route('counting') }}" class="btn btn-primary h-14 px-7 text-lg" wire:navigate>{{ __('Commencer une main') }}</a>
                     <a href="{{ localized_route('scoring') }}" class="font-bold text-ink underline decoration-ink-line decoration-2 underline-offset-[6px] hover:decoration-shu">{{ __('Ouvrir le barème') }}</a>
                 </div>
                 <p class="mt-6 flex flex-wrap items-center gap-2 text-sm">
                     <span class="mr-1 text-ink-muted">{{ __('Ou ciblez un yaku :') }}</span>
                     @foreach ([\App\Domain\Mahjong\Generation\Theme::Tanyao, \App\Domain\Mahjong\Generation\Theme::Pinfu, \App\Domain\Mahjong\Generation\Theme::Yakuhai, \App\Domain\Mahjong\Generation\Theme::Chiitoitsu, \App\Domain\Mahjong\Generation\Theme::Toitoi, \App\Domain\Mahjong\Generation\Theme::Honitsu] as $theme)
-                        <a href="{{ localized_route('training', ['theme' => $theme->value]) }}" title="{{ ucfirst($theme->gloss()) }}"
+                        <a href="{{ localized_route('counting', ['theme' => $theme->value]) }}" title="{{ ucfirst($theme->gloss()) }}"
                            class="rounded-full bg-paper-sunk px-3 py-1.5 font-medium text-ink shadow-[inset_0_0_0_1px_var(--paper-line)] transition-colors hover:bg-ink hover:text-paper">{{ $theme->label() }}</a>
                     @endforeach
-                    <a href="{{ localized_route('training') }}" class="px-1 text-ink-muted underline decoration-ink-line underline-offset-4 hover:text-ink">{{ __('et les autres à l’entraînement') }}</a>
+                    <a href="{{ localized_route('counting') }}" class="px-1 text-ink-muted underline decoration-ink-line underline-offset-4 hover:text-ink">{{ __('et les autres thèmes') }}</a>
                 </p>
                 <p class="mt-3 flex flex-wrap items-center gap-2 text-sm">
                     <span class="mr-1 text-ink-muted">{{ __('Peu de temps ? Exercice court :') }}</span>
-                    @foreach (\App\Livewire\Training::DRILLS as $key => ['label' => $label])
-                        <a href="{{ localized_route('training', ['exercice' => $key]) }}"
-                           class="rounded-full bg-paper-sunk px-3 py-1.5 font-medium text-ink shadow-[inset_0_0_0_1px_var(--paper-line)] transition-colors hover:bg-ink hover:text-paper">{{ __($label) }}</a>
+                    @foreach (\App\Training\Drill::cases() as $drill)
+                        <a href="{{ $drill === \App\Training\Drill::Waits ? localized_route('waits') : localized_route('counting', ['exercice' => $drill->value]) }}"
+                           class="rounded-full bg-paper-sunk px-3 py-1.5 font-medium text-ink shadow-[inset_0_0_0_1px_var(--paper-line)] transition-colors hover:bg-ink hover:text-paper">{{ $drill->label() }}</a>
                     @endforeach
                 </p>
             </div>
@@ -167,37 +167,56 @@
                 </ul>
 
                 <ul class="mt-8 flex flex-wrap gap-x-8 gap-y-2 text-sm" x-show="Object.keys($store.progress.drills).length">
-                    @foreach (\App\Livewire\Training::DRILLS as $key => ['label' => $label])
-                        <li x-data="{ get result() { return $store.progress.drillResult('{{ $key }}') } }" x-show="result">
-                            <span class="text-ink-muted">{{ __('Exercice :drill :', ['drill' => mb_strtolower(__($label))]) }}</span>
+                    @foreach (\App\Training\Drill::cases() as $drill)
+                        <li x-data="{ get result() { return $store.progress.drillResult('{{ $drill->value }}') } }" x-show="result">
+                            <span class="text-ink-muted">{{ __('Exercice :drill :', ['drill' => mb_strtolower($drill->label())]) }}</span>
                             <b class="num" x-text="result?.perfect"></b> {{ __('sans faute sur') }} <b class="num" x-text="result?.hands"></b>
                         </li>
                     @endforeach
                 </ul>
 
                 {{-- Ce qui reste à travailler : les mains ratées, à refaire, et les yaku oubliés. --}}
-                <div class="mt-10 grid gap-8 sm:grid-cols-2"
-                     x-data="{
-                         labels: @js(collect(\App\Domain\Mahjong\Yaku::cases())->mapWithKeys(fn ($yaku) => [$yaku->value => $yaku->shortLabel()])),
-                         url: @js(localized_route('training.hand', ['seed' => 'SEED'])),
-                     }"
+                <div class="mt-10 space-y-10"
+                     x-data="reviewList({
+                         sprite: @js($sprite),
+                         url: @js(localized_route('counting.hand', ['seed' => 'SEED'])),
+                         tilesUrl: @js(route('hands.tiles', absolute: false)),
+                         yaku: @js(collect(\App\Domain\Mahjong\Yaku::cases())->mapWithKeys(fn ($yaku) => [$yaku->value => $yaku->shortLabel()])),
+                         captions: @js([
+                             'themes' => collect(\App\Domain\Mahjong\Generation\Theme::cases())->mapWithKeys(fn ($theme) => [$theme->value => $theme->label()]),
+                             'levels' => collect(\App\Domain\Mahjong\Generation\Level::cases())->mapWithKeys(fn ($level) => [$level->value => $level->label()]),
+                             'free' => \App\Domain\Mahjong\Generation\Theme::Free->label(),
+                             'daily' => __('Défi du :day'),
+                         ]),
+                     })"
                      x-show="$store.progress.review.length || $store.progress.mostMissed().length">
+                    {{-- Chaque main ratée telle qu'elle était sur la table, avec les étapes à reprendre. --}}
                     <div x-show="$store.progress.review.length">
                         <h3 class="display text-xl">{{ __('À revoir') }}</h3>
                         <p class="mt-1 text-sm text-ink-muted">{{ __('Une main refaite sans faute quitte la liste.') }}</p>
-                        <ul class="mt-3 flex flex-wrap gap-2">
-                            <template x-for="entry in $store.progress.toReview.slice(0, 8)" :key="entry.seed">
+                        <ul class="mt-4 grid gap-3 sm:grid-cols-2">
+                            <template x-for="entry in entries" :key="entry.seed">
                                 <li>
-                                    <a :href="url.replace('SEED', entry.seed)"
-                                       class="flex items-baseline gap-2 rounded-lg bg-paper-sunk px-3 py-1.5 text-sm shadow-[inset_0_0_0_1px_var(--paper-line)] transition-colors hover:bg-ink hover:text-paper">
-                                        <span class="font-mono" x-text="entry.seed"></span>
-                                        <span class="num text-ko" x-text="entry.score + '/5'"></span>
+                                    <a :href="link(entry)"
+                                       class="@container flex h-full flex-col rounded-lg bg-paper-sunk px-3.5 pt-2.5 pb-3 shadow-[inset_0_0_0_1px_var(--paper-line)] transition-shadow hover:shadow-[inset_0_0_0_2px_var(--ink)]">
+                                        <span class="flex items-baseline justify-between gap-3 text-sm">
+                                            <span class="font-bold" x-text="caption(entry)"></span>
+                                            <span class="num font-bold text-ko"><span x-text="entry.score"></span>/5</span>
+                                        </span>
+                                        <span class="mt-3 flex flex-wrap items-end gap-x-1.5 gap-y-2.5 [--tile:clamp(0.8rem,calc((100cqi-1.5rem)/16.5),1.3rem)]" aria-hidden="true"
+                                              x-show="entry.tiles" x-html="handHtml(entry)"></span>
+                                        <span class="mt-1 block font-mono text-sm text-ink-muted" x-show="!entry.tiles" x-text="entry.seed"></span>
+                                        <span class="mt-auto flex flex-wrap gap-1 pt-3 text-xs" x-show="Array.isArray(entry.steps)">
+                                            @foreach ($steps as $index => [, $name])
+                                                <span class="rounded px-1.5 py-0.5" :class="entry.steps?.[{{ $index }}] ? 'text-ink-faint' : 'bg-ko-soft font-bold text-ko'">{{ $name }}<span class="sr-only" x-show="!entry.steps?.[{{ $index }}]"> ({{ __('raté') }})</span></span>
+                                            @endforeach
+                                        </span>
                                     </a>
                                 </li>
                             </template>
                         </ul>
                     </div>
-                    <div x-show="$store.progress.mostMissed().length">
+                    <div class="max-w-md" x-show="$store.progress.mostMissed().length">
                         <h3 class="display text-xl">{{ __('Yaku oubliés') }}</h3>
                         <p class="mt-1 text-sm text-ink-muted">{{ __('Ceux que vous laissez passer le plus souvent.') }}</p>
                         <ol class="mt-3 space-y-1.5">
@@ -213,7 +232,7 @@
             </div>
 
             {{-- Les défis des cinq dernières semaines : un jour manqué se rattrape. --}}
-            <div class="max-w-sm" x-data="dailyCalendar({ today: @js($today), url: @js(localized_route('training.hand', ['seed' => 'defi-DATE'])) })">
+            <div class="max-w-sm" x-data="dailyCalendar({ today: @js($today), url: @js(localized_route('counting.hand', ['seed' => 'defi-DATE'])) })">
                 <h3 class="display text-xl">{{ __('Défis du jour') }}</h3>
                 <p class="mt-1 text-sm text-ink-muted">
                     <span x-show="streak">{{ __('Série en cours :') }} <b class="num text-ink" x-text="streak"></b> <span x-text="streak > 1 ? @js(__('jours')) : @js(__('jour'))"></span>.</span>

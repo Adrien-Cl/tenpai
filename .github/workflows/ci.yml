@@ -2,7 +2,7 @@ name: CI
 
 on:
   push:
-    branches: [main]
+    branches: [main, develop]
   pull_request:
   workflow_dispatch:
 
@@ -230,8 +230,14 @@ jobs:
           check / text/html
           check /en text/html
           check /bareme text/html
-          check /entrainement/tenpai text/html
+          check /comptage/tenpai text/html
           check /tuiles.svg image/svg+xml
+          check '/mains.json?graines=tenpai' application/json
+
+          # L'ancienne adresse du comptage (liens partagés, mains à revoir) redirige définitivement vers la nouvelle.
+          redirect=$(curl -sS -o /dev/null -w '%{http_code} %{redirect_url}' "$base/entrainement/tenpai")
+          echo "/entrainement/tenpai → $redirect"
+          [[ $redirect == "301 $base/comptage/tenpai" ]] || { echo "::error::/entrainement/tenpai attendu 301 vers /comptage/tenpai, reçu $redirect"; exit 1; }
           # Sans l'extension GD, l'aperçu redirige vers l'image générale : on exige le PNG dessiné.
           check /apercu/tenpai.png image/png
 
@@ -239,7 +245,7 @@ jobs:
           [[ -n $css ]] || { echo "::error::Aucune feuille de style Vite dans la page d'accueil"; exit 1; }
           check "$css" text/css
 
-          livewire=$(curl -sS "$base/entrainement/tenpai" | grep -oE 'src="[^"]*livewire[^"]*"' | head -n1 | sed -E 's/^src="https?:\/\/[^/]+//; s/"$//')
+          livewire=$(curl -sS "$base/comptage/tenpai" | grep -oE 'src="[^"]*livewire[^"]*"' | head -n1 | sed -E 's/^src="https?:\/\/[^/]+//; s/"$//')
           [[ -n $livewire ]] || { echo "::error::Aucun script Livewire dans la page d'entraînement"; exit 1; }
           check "$livewire" application/javascript
 

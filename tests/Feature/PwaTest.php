@@ -47,9 +47,9 @@ it('décrit chaque main partagée sans rien dévoiler de son compte', function (
         ->assertSee('<meta property="og:description" content="'.e($description).'">', false)
         ->assertSee('<meta property="og:url" content="'.url($url).'">', false);
 })->with([
-    'main libre' => ['/entrainement/tenpai', 'Entraînement', 'Une main de riichi à compter en cinq étapes. Le lien redonne toujours la même main.'],
-    'défi du jour' => ['/entrainement/defi-2026-11-13', 'Défi du jour', 'Le défi du 13 novembre : la même main de riichi pour tout le monde. Saurez-vous la compter ?'],
-    'thème' => ['/entrainement/chinitsu-test0001', 'Entraînement : Chinitsu', 'Une main avec Chinitsu (pur) à compter en cinq étapes. Le lien redonne toujours la même main.'],
+    'main libre' => ['/comptage/tenpai', 'Comptage', 'Une main de riichi à compter en cinq étapes. Le lien redonne toujours la même main.'],
+    'défi du jour' => ['/comptage/defi-2026-11-13', 'Défi du jour', 'Le défi du 13 novembre : la même main de riichi pour tout le monde. Saurez-vous la compter ?'],
+    'thème' => ['/comptage/chinitsu-test0001', 'Comptage : Chinitsu', 'Une main avec Chinitsu (pur) à compter en cinq étapes. Le lien redonne toujours la même main.'],
     'exercice' => ['/exercice/fu/tenpai', 'Exercice : Fu et points', 'Une main de riichi à compter à partir des fu. Le lien redonne toujours la même main.'],
 ]);
 
@@ -69,7 +69,7 @@ it('refuse l’aperçu d’une graine invalide', function () {
 });
 
 it('donne à chaque page de main l’aperçu de ses tuiles', function () {
-    $this->get('/entrainement/tenpai')
+    $this->get('/comptage/tenpai')
         ->assertSee('<meta property="og:image" content="'.route('preview', ['seed' => 'tenpai']).'">', false);
 
     $this->get('/bareme')

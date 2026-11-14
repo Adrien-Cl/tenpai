@@ -1,6 +1,7 @@
 import { prepare, suggest, notYakuHint } from './yaku-search';
 import { pageLocale, t } from './text';
 import { applyChoice, choiceCookie, choiceFor, readChoice } from './backdrop';
+import { handHtml, seedCaption } from './review';
 
 const darkSystem = window.matchMedia('(prefers-color-scheme: dark)');
 
@@ -40,6 +41,13 @@ document.addEventListener('alpine:init', () => {
                 .slice(0, limit);
         },
 
+        /**
+         * Complète les mains à revoir avec leurs tuiles ({ graine: tuiles }).
+         */
+        fillTiles(tiles) {
+            this.review = this.review.map((entry) => (!entry.tiles && tiles?.[entry.seed] ? { ...entry, tiles: tiles[entry.seed] } : entry));
+        },
+
         drillResult(drill) {
             return this.drills[drill] ?? null;
         },
@@ -53,7 +61,7 @@ document.addEventListener('alpine:init', () => {
             return this.daily[date] ?? null;
         },
 
-        record({ seed, results, daily, drill = null, first = 0, missed = [] }) {
+        record({ seed, results, daily, drill = null, first = 0, missed = [], tiles = null }) {
             const data = this.data;
             const key = drill ? `${drill}:${seed}` : seed;
 
@@ -69,11 +77,7 @@ document.addEventListener('alpine:init', () => {
             // Exercice court : compté à part, sans toucher aux statistiques des mains complètes.
             if (drill) {
                 const played = STEP_KEYS.slice(first).map((_, i) => !!results[first + i]);
-                const previous = this.drills[drill] ?? { hands: 0, perfect: 0 };
-                this.drills = {
-                    ...this.drills,
-                    [drill]: { hands: previous.hands + 1, perfect: previous.perfect + (played.every(Boolean) ? 1 : 0) },
-                };
+                this.countDrill(drill, played.every(Boolean));
                 return;
             }
 
@@ -88,7 +92,8 @@ document.addEventListener('alpine:init', () => {
                 data.best = Math.max(data.best, data.streak);
             } else {
                 data.streak = 0;
-                const entry = { seed, score: flags.filter(Boolean).length };
+                // Les tuiles et le détail des étapes, pour montrer la main dans la liste (absents des anciennes entrées).
+                const entry = { seed, score: flags.filter(Boolean).length, steps: flags, tiles };
                 this.review = [...this.review.filter((e) => e.seed !== seed), entry].slice(-REVIEW_SIZE);
             }
 
@@ -106,6 +111,25 @@ document.addEventListener('alpine:init', () => {
             if (daily && !this.daily[daily]) {
                 this.daily = { ...this.daily, [daily]: { score: flags.filter(Boolean).length, perfect, steps: flags } };
             }
+        },
+
+        /**
+         * Un exercice à part (attentes, lectures) : une seule correction, comptée avec les exercices courts.
+         */
+        recordDrill({ seed, drill, perfect }) {
+            const key = `${drill}:${seed}`;
+            if (this.data.seen.includes(key)) return;
+
+            this.data.seen = [...this.data.seen, key].slice(-60);
+            this.countDrill(drill, perfect);
+        },
+
+        countDrill(drill, perfect) {
+            const previous = this.drills[drill] ?? { hands: 0, perfect: 0 };
+            this.drills = {
+                ...this.drills,
+                [drill]: { hands: previous.hands + 1, perfect: previous.perfect + (perfect ? 1 : 0) },
+            };
         },
 
         /**
@@ -199,6 +223,43 @@ document.addEventListener('alpine:init', () => {
             },
         };
     });
+
+    /**
+     * Ce qui reste à travailler (accueil) : les mains ratées, redessinées en petit, et les yaku oubliés.
+     */
+    Alpine.data('reviewList', ({ sprite, url, tilesUrl, yaku, captions }) => ({
+        labels: yaku,
+
+        // Les mains gardées sans leurs tuiles (avant qu'on les enregistre) les redemandent au serveur, une fois.
+        async init() {
+            const progress = Alpine.store('progress');
+            const missing = progress.review.filter((entry) => !entry.tiles).map((entry) => entry.seed);
+            if (!missing.length) return;
+
+            try {
+                const response = await fetch(`${tilesUrl}?graines=${encodeURIComponent(missing.join(','))}`, { headers: { Accept: 'application/json' } });
+                if (response.ok) progress.fillTiles(await response.json());
+            } catch (e) {
+                // Hors ligne : la carte garde le code de la main, on réessaiera à la prochaine visite.
+            }
+        },
+
+        get entries() {
+            return Alpine.store('progress').toReview.slice(0, 6);
+        },
+
+        handHtml(entry) {
+            return handHtml(entry.tiles, sprite);
+        },
+
+        caption(entry) {
+            return seedCaption(entry.seed, captions, pageLocale());
+        },
+
+        link(entry) {
+            return url.replace('SEED', entry.seed);
+        },
+    }));
 
     /**
      * Bouton du fond (en-tête) : passe du clair au foncé et inversement. L'icône suit le CSS ; ici, l'état annoncé.

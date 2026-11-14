@@ -1,8 +1,10 @@
 <?php
 
 use App\Domain\Mahjong\Limit;
+use App\Domain\Mahjong\Rules;
 use App\Domain\Mahjong\Scoring\Evaluation;
 use App\Domain\Mahjong\Scoring\EvaluationStatus;
+use App\Domain\Mahjong\Scoring\Evaluator;
 use App\Domain\Mahjong\Scoring\YakuHan;
 use App\Domain\Mahjong\Yaku;
 
@@ -122,4 +124,29 @@ it('remplace riichi par double riichi', function () {
 
     expect(array_keys(yakuList($evaluation)))->toContain(Yaku::DoubleRiichi->value)
         ->not->toContain(Yaku::Riichi->value);
+});
+
+it('donne toutes les lectures, de la plus payante à la moins payante', function () {
+    $hand = hand('222333444m 678s 55p', '6s', ['tsumo' => true]);
+    $readings = Evaluator::scoredReadings($hand, Rules::default());
+
+    expect($readings)->toHaveCount(2)
+        ->and($readings[0]->payment->limit)->toBe(Limit::Mangan)
+        ->and($readings[0]->reading)->toEqual(evaluate($hand)->reading())
+        ->and([$readings[1]->han, $readings[1]->fu()])->toBe([4, 20])
+        ->and(array_map(fn (YakuHan $yaku) => $yaku->yaku, $readings[1]->reading->yaku))
+        ->toEqualCanonicalizing([Yaku::MenzenTsumo, Yaku::Tanyao, Yaku::Pinfu, Yaku::Iipeikou]);
+});
+
+it('ne donne aucune lecture pour un yakuman', function () {
+    expect(Evaluator::scoredReadings(hand('111m 999m 111p 999p 1s', '1s'), Rules::default()))->toBe([]);
+});
+
+it('ajoute honba et bâtons de riichi seulement quand la table les compte', function () {
+    $hand = hand('123m 456m 234p 678s 99s', '4m')->withTable(honba: 2, riichiSticks: 1);
+
+    expect(evaluate($hand)->payment()->ron)->toBe(1000)
+        ->and(evaluate($hand)->payment()->gain())->toBe(1000)
+        ->and(evaluate($hand, new Rules(honba: true))->payment()->ron)->toBe(1600)
+        ->and(evaluate($hand, new Rules(honba: true))->payment()->gain())->toBe(2600);
 });

@@ -92,23 +92,25 @@ final class ScoringSheet
     }
 
     /**
-     * Les cinq limites, pour un gagnant et un mode de victoire.
+     * Les limites, pour un gagnant et un mode de victoire. Sans yakuman compté, le sanbaiman est la dernière.
      *
      * @return list<array{label: string, condition: string, value: string, detail: string|null, han: int}>
      */
     public function limitLine(bool $dealer, bool $tsumo): array
     {
+        $limits = array_values(array_filter(Limit::cases(), fn (Limit $limit): bool => $this->rules->kazoe || $limit !== Limit::Kazoe));
+
         return array_map(function (Limit $limit) use ($dealer, $tsumo): array {
             [$value, $detail] = self::cellValues(PointsCalculator::points($limit->minimumHan(), 30, $dealer, $tsumo, $this->rules), $dealer, $tsumo);
 
             return [
                 'label' => $limit->label(),
-                'condition' => $limit->condition(),
+                'condition' => $limit === Limit::Sanbaiman && ! $this->rules->kazoe ? __('11 han et plus') : $limit->condition(),
                 'value' => $value,
                 'detail' => $detail,
                 'han' => $limit->minimumHan(),
             ];
-        }, Limit::cases());
+        }, $limits);
     }
 
     /**

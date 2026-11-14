@@ -8,15 +8,18 @@ Tenpai est un entraîneur au comptage des mains de mahjong riichi. La main est d
 
 ## Fonctionnalités
 
-- **Entraînement** (`/entrainement`) : une main gagnante générée aléatoirement, à compter étape par étape.
+- **Comptage** (`/comptage`) : une main gagnante générée aléatoirement, à compter étape par étape.
   1. **Yaku** : repérer les yaku de la main, par leur nom.
   2. **Han** : donner la valeur de chacun, main ouverte ou fermée.
   3. **Dora** : compter les dora, les cinq rouges et les ura-dora.
   4. **Fu** : décompter les fu groupe par groupe, puis arrondir.
   5. **Points** : trouver la limite et ce que paie chaque joueur.
-- **Entraînement ciblé** (`/entrainement?theme=chinitsu`) : une main qui contient à coup sûr le yaku choisi, parmi 17 thèmes.
+- **Comptage ciblé** (`/comptage?theme=chinitsu`) : une main qui contient à coup sûr le yaku choisi, parmi 17 thèmes.
+- **Niveaux** (`/comptage?niveau=expert`) : débutant (sans kan ni situation rare, une seule lecture), normal, ou expert (kan, situations rares, mains à plusieurs lectures).
 - **Exercices courts** (`/exercice/fu/{graine}`, `/exercice/points/{graine}`) : la main commence aux fu ou aux points, les étapes précédentes sont données. Comptés à part.
-- **Mains partageables** : chaque main est tirée d'une graine (`/entrainement/{graine}`, `chinitsu-ab12cd34` pour un thème). La même URL donne toujours la même main, avec son image d'aperçu (`/apercu/{graine}.png`).
+- **Lectures** (`/exercice/lectures/{graine}`) : une main qui se découpe de plusieurs façons ; on compte chaque lecture et on garde la plus payante.
+- **Attentes** (`/attentes`) : la main juste avant la tuile gagnante ; trouver toutes les tuiles qui la complètent, et dire si l’on est furiten d’après ses défausses.
+- **Mains partageables** : chaque main est tirée d'une graine (`/comptage/{graine}`, `expert-chinitsu-ab12cd34` pour un niveau et un thème, `chinitsu-ab12cd34` pour un thème). La même URL donne toujours la même main, avec son image d'aperçu (`/apercu/{graine}.png`).
 - **Défi du jour** (`/defi`) : la même main pour tout le monde, tirée de la date (heure de Paris). Résultat à partager, calendrier des cinq dernières semaines et série en cours.
 - **Revoir ses erreurs** : les mains ratées à refaire, et les yaku les plus souvent oubliés. Les progrès restent dans le navigateur.
 - **Barème** (`/bareme`) : les tables de han, de fu et de points, à consulter à tout moment.
@@ -29,13 +32,15 @@ Par défaut, riichi courant, style salle japonaise :
 
 - cinq tuiles rouges (aka-dora) ;
 - pas de kiriage mangan ;
-- double vent compté à 4 fu.
+- double vent compté à 4 fu ;
+- 13 han et plus comptés comme yakuman ;
+- sans honba ni bâton de riichi.
 
-Chacun peut les changer (bouton réglages de l'en-tête) ; le choix est gardé dans un cookie. Les options sont définies dans [`App\Domain\Mahjong\Rules`](app/Domain/Mahjong/Rules.php). Elles changent le calcul, jamais la main générée.
+Un préréglage « Tournoi » (EMA, WRC) passe d’un clic aux règles de tournoi : sans rouges, kiriage, double vent à 2 fu, 13 han plafonnés au sanbaiman. Chacun peut les changer (bouton réglages de l'en-tête) ; le choix est gardé dans un cookie. Les options sont définies dans [`App\Domain\Mahjong\Rules`](app/Domain/Mahjong/Rules.php). Elles changent le calcul, jamais la main générée.
 
 ## Langues
 
-Le français est la langue source, sans préfixe ; l'anglais vit sous `/en`, avec ses propres adresses (`/en/training`, `/en/scoring`…). Les routes sont déclarées une fois par langue dans [`routes/web.php`](routes/web.php), à partir de [`App\Support\Locale`](app/Support/Locale.php) ; dans les vues, `localized_route()` donne l'adresse dans la langue de la page.
+Le français est la langue source, sans préfixe ; l'anglais vit sous `/en`, avec ses propres adresses (`/en/counting`, `/en/scoring`…). Les routes sont déclarées une fois par langue dans [`routes/web.php`](routes/web.php), à partir de [`App\Support\Locale`](app/Support/Locale.php) ; dans les vues, `localized_route()` donne l'adresse dans la langue de la page.
 
 Les phrases françaises servent de clés de traduction (`__('…')`, fichier [`lang/en.json`](lang/en.json)) :
 

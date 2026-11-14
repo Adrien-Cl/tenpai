@@ -2,10 +2,12 @@
 
 namespace App\Livewire;
 
+use App\Domain\Mahjong\Generation\Level;
 use App\Domain\Mahjong\Generation\Seed;
 use App\Domain\Mahjong\Generation\Theme;
 use App\Support\Locale;
 use App\Support\TableRules;
+use App\Training\Drill;
 use App\Training\FieldState;
 use App\Training\Step;
 use App\Training\Steps\DoraStep;
@@ -20,7 +22,7 @@ use Livewire\Attributes\Locked;
 use Livewire\Component;
 
 /**
- * Entraînement au comptage : une main, cinq étapes (yaku, han, dora, fu, points), puis le récapitulatif.
+ * Le comptage : une main, cinq étapes (yaku, han, dora, fu, points), puis le récapitulatif.
  *
  * La main n'est jamais stockée : elle est recalculée à partir de sa graine, côté serveur.
  * Les bonnes réponses ne partent donc vers le navigateur qu'une fois l'étape corrigée.
@@ -29,17 +31,7 @@ class Training extends Component
 {
     public const int RECAP = 5;
 
-    /**
-     * Exercices courts : la main commence à cette étape, les précédentes sont données.
-     *
-     * @var array<string, array{first: int, label: string}>
-     */
-    public const array DRILLS = [
-        'fu' => ['first' => 3, 'label' => 'Fu et points'],
-        'points' => ['first' => 4, 'label' => 'Points seulement'],
-    ];
-
-    /** Exercice court en cours (clé de DRILLS), ou null pour une main complète. */
+    /** Exercice court en cours (Drill::steps(), qui commencent à une étape donnée), ou null pour une main complète. */
     #[Locked]
     public ?string $drill = null;
 
@@ -49,7 +41,7 @@ class Training extends Component
     /**
      * Règles de la table, lues dans le cookie à l'ouverture : elles ne changent pas en cours de main.
      *
-     * @var array{aka: bool, kiriage: bool, doubleWind4: bool}
+     * @var array{aka: bool, kiriage: bool, doubleWind4: bool, kazoe: bool, honba: bool}
      */
     #[Locked]
     public array $rules;
@@ -85,7 +77,7 @@ class Training extends Component
     public function mount(string $seed, ?string $drill = null): void
     {
         abort_unless(Seed::isValid($seed), 404);
-        abort_unless($drill === null || isset(self::DRILLS[$drill]), 404);
+        abort_unless($drill === null || in_array(Drill::tryFrom($drill), Drill::steps(), true), 404);
 
         $this->locale = app()->getLocale();
         $this->seed = Seed::fromString($seed)->value;
@@ -104,7 +96,7 @@ class Training extends Component
      */
     public function firstStep(): int
     {
-        return $this->drill !== null ? self::DRILLS[$this->drill]['first'] : 0;
+        return $this->drill !== null ? (int) Drill::from($this->drill)->firstStep() : 0;
     }
 
     /**
@@ -117,7 +109,7 @@ class Training extends Component
 
     public function drillLabel(): ?string
     {
-        return $this->drill !== null ? __(self::DRILLS[$this->drill]['label']) : null;
+        return $this->drill !== null ? Drill::from($this->drill)->label() : null;
     }
 
     #[Computed]
@@ -180,13 +172,21 @@ class Training extends Component
         }
     }
 
+    /**
+     * Le niveau de la main (normal pour le défi du jour).
+     */
+    public function level(): Level
+    {
+        return Seed::fromString($this->seed)->level();
+    }
+
     public function nextHand(): void
     {
-        $seed = Seed::themed($this->theme() ?? Theme::Free)->value;
+        $seed = Seed::themed($this->theme() ?? Theme::Free, $this->level());
 
         $this->drill !== null
-            ? $this->redirect(localized_route('drill.hand', ['drill' => $this->drill, 'seed' => $seed]), navigate: true)
-            : $this->redirect(localized_route('training.hand', ['seed' => $seed]), navigate: true);
+            ? $this->redirect(Drill::from($this->drill)->url($seed), navigate: true)
+            : $this->redirect(localized_route('counting.hand', ['seed' => $seed->value]), navigate: true);
     }
 
     /**
@@ -250,6 +250,7 @@ class Training extends Component
                 drill: $this->drill,
                 first: $this->firstStep(),
                 missed: $this->missedYaku(),
+                tiles: $this->hand->generated->tableCodes(),
             );
         }
     }
@@ -259,8 +260,8 @@ class Training extends Component
         $title = match (true) {
             $this->dailyDate() !== null => __('Défi du jour'),
             $this->drill !== null => __('Exercice : :drill', ['drill' => $this->drillLabel()]),
-            $this->theme() !== null => __('Entraînement : :theme', ['theme' => $this->theme()->label()]),
-            default => __('Entraînement'),
+            $this->theme() !== null => __('Comptage : :theme', ['theme' => $this->theme()->label()]),
+            default => __('Comptage'),
         };
 
         return view('livewire.training')->title($title)->layoutData([

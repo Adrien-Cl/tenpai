@@ -28,5 +28,8 @@ class AppServiceProvider extends ServiceProvider
 
         // Chaque nouvelle graine d'aperçu coûte un dessin GD et une place en cache : on en limite le rythme.
         RateLimiter::for('preview', fn (Request $request): Limit => Limit::perMinute(30)->by($request->ip()));
+
+        // Les tuiles des mains à revoir : demandées une fois par main, puis gardées par le navigateur.
+        RateLimiter::for('hands', fn (Request $request): Limit => Limit::perMinute(30)->by($request->ip()));
     }
 }

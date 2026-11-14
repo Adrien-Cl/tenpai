@@ -138,8 +138,9 @@
             </div>
 
             <h3 class="display mt-8 text-lg">{{ __('Au-delà de 4 han, les fu ne comptent plus') }}</h3>
-            <ul class="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-5">
-                @foreach ($sheet->limitLine($dealer, $tsumo) as $limit)
+            @php($limits = $sheet->limitLine($dealer, $tsumo))
+            <ul @class(['mt-3 grid grid-cols-2 gap-2', 'sm:grid-cols-5' => count($limits) === 5, 'sm:grid-cols-4' => count($limits) === 4])>
+                @foreach ($limits as $limit)
                     <li class="rounded-lg bg-paper-sunk px-3 py-2.5">
                         <span class="block font-bold">{{ $limit['label'] }}</span>
                         <span class="display num block text-lg">{{ $limit['value'] }}</span>
@@ -158,5 +159,6 @@
         {{ __('Ron : base × 4, ou × 6 pour le donneur. Tsumo : chaque non-donneur paie la base, le donneur le double.') }}
         {{ __('Chaque paiement est arrondi à la centaine supérieure.') }}
         @if ($sheet->rules->kiriage) {{ __('Kiriage : 4 han 30 fu et 3 han 60 fu comptent comme mangan.') }} @endif
+        @if ($sheet->rules->honba) {{ __('Honba : 300 de plus en ron, 100 de plus par payeur en tsumo. Chaque bâton de riichi sur la table : 1 000 pour le gagnant.') }} @endif
     </p>
 </div>

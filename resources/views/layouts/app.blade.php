@@ -84,7 +84,8 @@
              class="paper absolute inset-x-4 top-full z-40 hidden flex-col gap-1 p-2.5 md:static md:ml-auto md:flex md:flex-row md:items-center md:gap-6 md:bg-transparent md:p-0 md:shadow-none">
             <nav class="flex flex-col gap-0.5 md:flex-row md:items-center md:gap-2" aria-label="{{ __('Navigation principale') }}">
                 @foreach ([
-                    ['training', __('S’entraîner'), ['training*', 'drill*']],
+                    ['counting', __('Comptage'), ['counting*', 'drill*', 'readings*']],
+                    ['waits', __('Attentes'), 'waits*'],
                     ['daily', __('Défi du jour'), 'daily'],
                     ['scoring', __('Barème'), 'scoring'],
                 ] as [$route, $label, $pattern])
@@ -95,7 +96,7 @@
                            'text-ink-muted hover:text-ink' => ! $isCurrent($pattern),
                        ])
                        @if ($isCurrent($pattern)) aria-current="page" @endif
-                       @if ($route === 'training') wire:navigate @endif>{{ $label }}</a>
+                       @if (in_array($route, ['counting', 'waits'], true)) wire:navigate @endif>{{ $label }}</a>
                 @endforeach
             </nav>
 
@@ -157,9 +158,10 @@
         </div>
         <div class="flex flex-wrap items-baseline justify-between gap-x-8 gap-y-2">
             <p>
-                {{ __(':label : kuitan, :rules, sans honba ni bâton de riichi.', [
-                    'label' => \App\Support\TableRules::isDefault($tableRules) ? __('Riichi courant, style salle japonaise') : __('Vos règles'),
+                {{ __(':label : kuitan, :rules, :honba.', [
+                    'label' => \App\Support\TableRules::name($tableRules),
                     'rules' => \App\Support\TableRules::describe($tableRules),
+                    'honba' => $tableRules->honba ? __('honba et bâtons de riichi comptés') : __('sans honba ni bâton de riichi'),
                 ]) }}
                 <br>{{ __('Vos progrès restent dans ce navigateur.') }}
             </p>
@@ -168,8 +170,15 @@
     </footer>
 
     {{-- Règles de la table : enregistrées dans un cookie, elles s'appliquent dès la main suivante. --}}
-    <dialog x-data x-on:open-rules.window="$el.showModal()" x-on:click.self="$el.close()" aria-labelledby="rules-title"
-            class="paper m-auto w-[min(32rem,calc(100vw-2rem))] p-0 backdrop:bg-black/60 backdrop:backdrop-blur-[2px]">
+    {{-- Un préréglage coche les options d'une famille de tables ; changer une option à la main le quitte. --}}
+    <dialog x-data="{
+                rules: @js(\App\Support\TableRules::toArray($tableRules)),
+                presets: @js(\App\Support\TableRules::PRESETS),
+                apply(key) { Object.assign(this.rules, this.presets[key]) },
+                isPreset(key) { return Object.entries(this.presets[key]).every(([option, value]) => this.rules[option] === value) },
+            }"
+            x-on:open-rules.window="$el.showModal()" x-on:click.self="$el.close()" aria-labelledby="rules-title"
+            class="paper m-auto max-h-[92dvh] w-[min(32rem,calc(100vw-2rem))] p-0 backdrop:bg-black/60 backdrop:backdrop-blur-[2px]">
         <form method="POST" action="{{ route('rules') }}" class="px-5 pt-5 pb-6 sm:px-7 sm:pt-6">
             @csrf
             <header class="flex items-center gap-4">
@@ -178,11 +187,25 @@
             </header>
             <p class="mt-1 text-sm text-ink-muted">{{ __('Elles changent le compte, jamais la main tirée. Une main en cours repart de la première étape.') }}</p>
 
+            <div class="mt-5" role="group" aria-labelledby="rules-presets">
+                <p id="rules-presets" class="text-sm font-bold">{{ __('Préréglages') }}</p>
+                <div class="mt-2 flex flex-wrap gap-2">
+                    @foreach (array_keys(\App\Support\TableRules::PRESETS) as $preset)
+                        @php(['label' => $presetName, 'tables' => $presetTables] = \App\Support\TableRules::presetLabel($preset))
+                        <button type="button" class="choice" x-on:click="apply('{{ $preset }}')"
+                                x-bind:class="isPreset('{{ $preset }}') && 'bg-ink! text-paper! shadow-none!'"
+                                x-bind:aria-pressed="isPreset('{{ $preset }}')" aria-pressed="{{ \App\Support\TableRules::preset($tableRules) === $preset ? 'true' : 'false' }}">
+                            {{ $presetName }} <small x-bind:class="isPreset('{{ $preset }}') && 'text-paper!'">{{ $presetTables }}</small>
+                        </button>
+                    @endforeach
+                </div>
+            </div>
+
             <fieldset class="mt-5 space-y-4">
                 <legend class="sr-only">{{ __('Options') }}</legend>
                 @foreach (\App\Support\TableRules::OPTIONS as [$key, $label, $help])
                     <label class="flex gap-3">
-                        <input type="checkbox" name="{{ $key }}" value="1" class="mt-1 size-4 shrink-0 accent-shu" @checked($tableRules->{$key})>
+                        <input type="checkbox" name="{{ $key }}" value="1" class="mt-1 size-4 shrink-0 accent-shu" x-model="rules.{{ $key }}" @checked($tableRules->{$key})>
                         <span>
                             <span class="block font-medium">{{ __($label) }}</span>
                             <span class="block text-sm text-ink-muted">{{ __($help) }}</span>

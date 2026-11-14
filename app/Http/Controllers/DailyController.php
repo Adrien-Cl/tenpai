@@ -12,6 +12,6 @@ class DailyController extends Controller
      */
     public function __invoke(): RedirectResponse
     {
-        return redirect(localized_route('training.hand', ['seed' => Seed::daily(now())->value]));
+        return redirect(localized_route('counting.hand', ['seed' => Seed::daily(now())->value]));
     }
 }

@@ -61,3 +61,40 @@ it('arrondit au mangan avec le kiriage', function (int $han, int $fu) {
     '4 han 30 fu' => [4, 30],
     '3 han 60 fu' => [3, 60],
 ]);
+
+it('plafonne 13 han au sanbaiman sans yakuman compté', function () {
+    $payment = PointsCalculator::points(14, 30, false, false, new Rules(kazoe: false));
+
+    expect($payment->limit)->toBe(Limit::Sanbaiman)
+        ->and($payment->ron)->toBe(24000)
+        ->and(ron(14, 30))->toBe(32000);
+});
+
+it('ajoute 300 par honba au ron', function () {
+    $payment = PointsCalculator::points(3, 30, false, false, Rules::default(), honba: 2);
+
+    expect($payment->ron)->toBe(3900 + 600)
+        ->and($payment->total)->toBe(4500)
+        ->and($payment->honba)->toBe(2);
+});
+
+it('ajoute 100 par honba à chaque paiement d’un tsumo', function () {
+    $nonDealer = PointsCalculator::points(1, 30, false, true, Rules::default(), honba: 3);
+    $dealer = PointsCalculator::points(3, 30, true, true, Rules::default(), honba: 1);
+
+    expect($nonDealer->fromOthers)->toBe(300 + 300)
+        ->and($nonDealer->fromDealer)->toBe(500 + 300)
+        ->and($nonDealer->total)->toBe(1100 + 900)
+        ->and($dealer->each)->toBe(2100)
+        ->and($dealer->total)->toBe(6300);
+});
+
+it('compte les bâtons de riichi dans le gain, pas dans les paiements', function () {
+    $payment = PointsCalculator::points(3, 30, false, false, Rules::default(), honba: 1, sticks: 2);
+
+    expect($payment->ron)->toBe(4200)
+        ->and($payment->total)->toBe(4200)
+        ->and($payment->gain())->toBe(6200)
+        ->and($payment->hasBonus())->toBeTrue()
+        ->and(PointsCalculator::points(3, 30, false, false, Rules::default())->hasBonus())->toBeFalse();
+});

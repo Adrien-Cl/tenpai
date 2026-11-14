@@ -74,3 +74,16 @@ function hand(string $closed, string $win, array $options = []): Hand
         aka: $options['aka'] ?? 0,
     );
 }
+
+/**
+ * Les intitulés des liens marqués « page en cours » (aria-current="page"), espaces normalisés :
+ * l'entrée du menu, puis l'exercice, le niveau et le thème choisis.
+ *
+ * @return list<string>
+ */
+function currentLinks(string $html): array
+{
+    preg_match_all('/<a\b[^>]*\baria-current="page"[^>]*>(.*?)<\/a>/s', $html, $matches);
+
+    return array_map(fn (string $text): string => trim((string) preg_replace('/\s+/u', ' ', strip_tags($text))), $matches[1]);
+}
