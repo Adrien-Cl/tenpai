@@ -1038,7 +1038,103 @@
     }
 }
 
-/* ---------- 10. Décor : l'estampe de la saison ---------- */
+/* ---------- 10. Apprendre : les guides ---------- */
+@layer components {
+    /* Le texte d'un guide : paragraphes aérés, intertitres à l'encre, puces vermillon. */
+    .guide {
+        line-height: 1.7;
+    }
+
+    .guide > * + * {
+        margin-top: 1.1rem;
+    }
+
+    .guide h2 {
+        margin-top: 3rem;
+        font-family: var(--font-display);
+        font-size: clamp(1.4rem, 1.15rem + 1vw, 1.85rem);
+        line-height: 1.15;
+        scroll-margin-top: 1.5rem;
+    }
+
+    .guide h2:first-child {
+        margin-top: 0;
+    }
+
+    .guide h3 {
+        margin-top: 2rem;
+        font-size: 1.15rem;
+        font-weight: 700;
+        scroll-margin-top: 1.5rem;
+    }
+
+    .guide :is(p, li, dd) {
+        max-width: 70ch;
+    }
+
+    .guide ul:not([class]) > li,
+    .guide ol:not([class]) > li {
+        position: relative;
+        padding-left: 1.4rem;
+    }
+
+    .guide :is(ul, ol):not([class]) > li + li {
+        margin-top: 0.5rem;
+    }
+
+    .guide ul:not([class]) > li::before {
+        content: '';
+        position: absolute;
+        left: 0.25rem;
+        top: 0.68em;
+        width: 0.42rem;
+        height: 0.42rem;
+        border-radius: 999px;
+        background: var(--shu-500);
+    }
+
+    .guide ol:not([class]) {
+        counter-reset: guide-step;
+    }
+
+    .guide ol:not([class]) > li::before {
+        counter-increment: guide-step;
+        content: counter(guide-step) '.';
+        position: absolute;
+        left: 0;
+        font-weight: 700;
+        color: var(--shu-600);
+    }
+
+    .guide a:not([class]) {
+        font-weight: 700;
+        text-decoration: underline;
+        text-decoration-color: var(--shu-500);
+        text-decoration-thickness: 2px;
+        text-underline-offset: 4px;
+    }
+
+    .guide a:not([class]):hover {
+        text-decoration-color: currentColor;
+    }
+
+    /* Encadré « à retenir » : un filet doré, comme un signet. */
+    .guide-note {
+        padding: 0.9rem 1.1rem;
+        border-radius: 0.5rem;
+        background: var(--gilt-soft);
+        box-shadow: inset 3px 0 0 var(--gilt);
+    }
+
+    /* Un exemple de tuiles, posé sur un coin de tapis. */
+    .guide-felt {
+        border-width: 6px;
+        border-radius: 0.8rem;
+        padding: 1.1rem 1rem 1.2rem;
+    }
+}
+
+/* ---------- 11. Décor : l'estampe de la saison ---------- */
 @layer components {
     .scenery {
         position: fixed;

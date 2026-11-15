@@ -268,6 +268,7 @@ class Training extends Component
             'description' => $this->description(),
             'image' => localized_route('preview', ['seed' => $this->seed]),
             'imageAlt' => __('Les tuiles de la main à compter, posées sur le tapis.'),
+            'robots' => 'noindex, follow',
         ]);
     }
 

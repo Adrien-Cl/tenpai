@@ -16,7 +16,7 @@ final class Locale
     /**
      * Préfixe d'adresse et mots des pages, par langue.
      *
-     * @var array<string, array{prefix: string, name: string, native: string, counting: string, formerCounting: string, drill: string, waits: string, readings: string, daily: string, scoring: string, offline: string, preview: string}>
+     * @var array<string, array{prefix: string, name: string, native: string, counting: string, formerCounting: string, drill: string, waits: string, readings: string, daily: string, scoring: string, offline: string, preview: string, learn: string, guides: array<string, string>}>
      */
     public const array LOCALES = [
         'fr' => [
@@ -32,6 +32,13 @@ final class Locale
             'scoring' => 'bareme',
             'offline' => 'hors-ligne',
             'preview' => 'apercu',
+            'learn' => 'apprendre',
+            'guides' => [
+                'tiles' => 'les-tuiles',
+                'game' => 'deroulement-d-une-partie',
+                'scoring' => 'calcul-des-points',
+                'glossary' => 'lexique',
+            ],
         ],
         'en' => [
             'prefix' => 'en',
@@ -46,6 +53,13 @@ final class Locale
             'scoring' => 'scoring',
             'offline' => 'offline',
             'preview' => 'preview',
+            'learn' => 'learn',
+            'guides' => [
+                'tiles' => 'tiles',
+                'game' => 'how-to-play',
+                'scoring' => 'scoring-basics',
+                'glossary' => 'glossary',
+            ],
         ],
     ];
 
@@ -99,7 +113,9 @@ final class Locale
         }
 
         $base = self::baseRouteName($name);
-        $parameters = $route->parameters();
+
+        // Seuls les paramètres de l'adresse : les valeurs par défaut d'une route (vue, statut…) n'y ont pas leur place.
+        $parameters = array_intersect_key($route->parameters(), array_flip($route->parameterNames()));
 
         return collect(array_keys(self::LOCALES))
             ->mapWithKeys(fn (string $locale): array => [$locale => route(self::routeName($base, $locale), $parameters)])

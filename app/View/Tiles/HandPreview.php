@@ -77,8 +77,11 @@ final class HandPreview
             $x += self::GROUP_GAP * $scale;
         }
 
+        // 256 couleurs suffisent à l'œil pour des tuiles sur un tapis, et l'image pèse moitié moins (≈ 75 Ko).
+        imagetruecolortopalette($canvas, true, 256);
+
         ob_start();
-        imagepng($canvas, null, 7);
+        imagepng($canvas, null, 9);
 
         return (string) ob_get_clean();
     }
