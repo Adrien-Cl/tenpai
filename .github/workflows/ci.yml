@@ -241,9 +241,13 @@ jobs:
           # Le sitemap et robots.txt sont servis par l'application, plus par des fichiers statiques.
           check /sitemap.xml application/xml
           check /robots.txt text/plain
-          curl -sS "$base/robots.txt" | grep -q "^Sitemap: $base/sitemap.xml" \
+          # Le contenu passe par une variable : avec pipefail, « curl | grep -q » échoue quand grep s'arrête
+          # au premier résultat avant que curl ait tout écrit (« Failed writing body »).
+          robots=$(curl -sS "$base/robots.txt")
+          grep -qF "Sitemap: $base/sitemap.xml" <<<"$robots" \
             || { echo "::error::robots.txt ne cite pas le sitemap"; exit 1; }
-          curl -sS "$base/sitemap.xml" | grep -q "<loc>$base/apprendre</loc>" \
+          sitemap=$(curl -sS "$base/sitemap.xml")
+          grep -qF "<loc>$base/apprendre</loc>" <<<"$sitemap" \
             || { echo "::error::Le sitemap ne liste pas /apprendre"; exit 1; }
 
           # Le .htaccess compresse le sprite des tuiles (mod_deflate et mod_filter, activés dans le Dockerfile).
