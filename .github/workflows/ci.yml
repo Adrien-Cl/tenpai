@@ -231,8 +231,25 @@ jobs:
           check /en text/html
           check /bareme text/html
           check /comptage/tenpai text/html
+          check /apprendre text/html
+          check /apprendre/calcul-des-points text/html
+          check /en/learn/glossary text/html
           check /tuiles.svg image/svg+xml
+          check /favicon.ico image/x-icon
           check '/mains.json?graines=tenpai' application/json
+
+          # Le sitemap et robots.txt sont servis par l'application, plus par des fichiers statiques.
+          check /sitemap.xml application/xml
+          check /robots.txt text/plain
+          curl -sS "$base/robots.txt" | grep -q "^Sitemap: $base/sitemap.xml" \
+            || { echo "::error::robots.txt ne cite pas le sitemap"; exit 1; }
+          curl -sS "$base/sitemap.xml" | grep -q "<loc>$base/apprendre</loc>" \
+            || { echo "::error::Le sitemap ne liste pas /apprendre"; exit 1; }
+
+          # Le .htaccess compresse le sprite des tuiles (mod_deflate et mod_filter, activés dans le Dockerfile).
+          encoding=$(curl -sS -H 'Accept-Encoding: gzip' -o /dev/null -w '%header{content-encoding}' "$base/tuiles.svg")
+          echo "/tuiles.svg (gzip) → $encoding"
+          [[ $encoding == gzip ]] || { echo "::error::/tuiles.svg attendu compressé en gzip, reçu « $encoding »"; exit 1; }
 
           # L'ancienne adresse du comptage (liens partagés, mains à revoir) redirige définitivement vers la nouvelle.
           redirect=$(curl -sS -o /dev/null -w '%{http_code} %{redirect_url}' "$base/entrainement/tenpai")
@@ -244,6 +261,10 @@ jobs:
           css=$(curl -sS "$base/" | grep -oE '/build/assets/[^"]+\.css' | head -n1)
           [[ -n $css ]] || { echo "::error::Aucune feuille de style Vite dans la page d'accueil"; exit 1; }
           check "$css" text/css
+          # Les fichiers Vite portent une empreinte : le .htaccess les garde en cache un an.
+          cache=$(curl -sS -o /dev/null -w '%header{cache-control}' "$base$css")
+          echo "$css (cache) → $cache"
+          [[ $cache == *immutable* ]] || { echo "::error::$css attendu immutable, reçu « $cache »"; exit 1; }
 
           livewire=$(curl -sS "$base/comptage/tenpai" | grep -oE 'src="[^"]*livewire[^"]*"' | head -n1 | sed -E 's/^src="https?:\/\/[^/]+//; s/"$//')
           [[ -n $livewire ]] || { echo "::error::Aucun script Livewire dans la page d'entraînement"; exit 1; }
