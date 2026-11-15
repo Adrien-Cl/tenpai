@@ -23,6 +23,7 @@ Tenpai est un entraîneur au comptage des mains de mahjong riichi. La main est d
 - **Défi du jour** (`/defi`) : la même main pour tout le monde, tirée de la date (heure de Paris). Résultat à partager, calendrier des cinq dernières semaines et série en cours.
 - **Revoir ses erreurs** : les mains ratées à refaire, et les yaku les plus souvent oubliés. Les progrès restent dans le navigateur.
 - **Barème** (`/bareme`) : les tables de han, de fu et de points, à consulter à tout moment.
+- **Apprendre** (`/apprendre`) : quatre guides pour débuter (les tuiles, le déroulement d’une partie, le calcul des points avec une main comptée par le moteur, un lexique de A à Z), décrits aux moteurs de recherche (JSON-LD, sitemap).
 - **Application installable** : manifeste et service worker ; hors ligne, l'accueil et le barème restent consultables.
 - **Décor saisonnier** : la scène d'accueil change avec les saisons, à la manière des estampes « bambou et moineau ».
 

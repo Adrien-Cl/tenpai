@@ -10,6 +10,7 @@
 //
 // À relancer après un changement du dessin des tuiles ou de la charte.
 
+import { execFileSync } from 'node:child_process';
 import { mkdir } from 'node:fs/promises';
 import { fileURLToPath } from 'node:url';
 import { chromium } from 'playwright';
@@ -120,4 +121,8 @@ for (const [path, title, subtitle, rack] of images) {
 }
 
 await browser.close();
+
+// Les images servies telles quelles (og.png, og-en.png) passent en 256 couleurs : deux fois plus légères.
+execFileSync('php', [`${OUT}compress.php`, `${OUT}../../public/og.png`, `${OUT}../../public/og-en.png`], { stdio: 'inherit' });
+
 console.log(`Images générées dans ${OUT}`);

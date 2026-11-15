@@ -36,7 +36,7 @@ it('prépare l’aperçu des liens partagés avec l’image du site', function (
 
     $this->get('/')
         ->assertSee('<meta property="og:image" content="'.asset('og.png').'">', false)
-        ->assertSee('<meta property="og:title" content="Tenpai · Comptez vos mains de riichi">', false)
+        ->assertSee('<meta property="og:title" content="Tenpai · Apprendre à compter les points au mahjong riichi">', false)
         ->assertSee('<meta name="twitter:card" content="summary_large_image">', false);
 });
 

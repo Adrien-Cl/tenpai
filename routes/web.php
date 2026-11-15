@@ -5,8 +5,11 @@ use App\Http\Controllers\FormerCountingController;
 use App\Http\Controllers\HandPreviewController;
 use App\Http\Controllers\HandTilesController;
 use App\Http\Controllers\HomeController;
+use App\Http\Controllers\LearnController;
+use App\Http\Controllers\RobotsController;
 use App\Http\Controllers\RulesController;
 use App\Http\Controllers\ScoringController;
+use App\Http\Controllers\SitemapController;
 use App\Http\Controllers\TileSpriteController;
 use App\Http\Controllers\TrainingController;
 use App\Http\Controllers\WaitsController;
@@ -16,6 +19,7 @@ use App\Livewire\Training;
 use App\Livewire\Waits;
 use App\Support\Locale;
 use App\Training\Drill;
+use App\View\Learn\Guide;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -65,6 +69,13 @@ foreach (Locale::LOCALES as $locale => $words) {
 
             Route::get("/{$words['scoring']}", ScoringController::class)->name('scoring');
 
+            Route::get("/{$words['learn']}", LearnController::class)->name('learn');
+
+            foreach (Guide::cases() as $guide) {
+                Route::get("/{$words['learn']}/{$words['guides'][$guide->value]}", LearnController::class)
+                    ->name($guide->routeName());
+            }
+
             Route::view("/{$words['offline']}", 'hors-ligne')->name('offline');
         });
 }
@@ -72,6 +83,10 @@ foreach (Locale::LOCALES as $locale => $words) {
 Route::post('/regles', RulesController::class)->name('rules');
 
 Route::get('/tuiles.svg', TileSpriteController::class)->name('tiles.sprite');
+
+Route::get('/sitemap.xml', SitemapController::class)->name('sitemap');
+
+Route::get('/robots.txt', RobotsController::class)->name('robots');
 
 Route::get('/mains.json', HandTilesController::class)
     ->middleware('throttle:hands')

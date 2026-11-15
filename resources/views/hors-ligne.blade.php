@@ -1,4 +1,4 @@
-<x-layouts::app :title="__('Hors ligne')" :description="__('Pas de réseau : les exercices attendront, le barème reste consultable.')">
+<x-layouts::app :title="__('Hors ligne')" :description="__('Pas de réseau : les exercices attendront, le barème reste consultable.')" robots="noindex">
     <div class="mx-auto max-w-3xl px-4 pt-10 sm:px-6 sm:pt-16">
         <h1 class="display text-4xl sm:text-5xl">{{ __('Pas de réseau') }}</h1>
         <p class="mt-4 max-w-[58ch] text-lg text-ink-muted">

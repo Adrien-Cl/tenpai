@@ -9,8 +9,7 @@ it('présente l’application sur la page d’accueil', function () {
         ->assertSee('Comptez une main de riichi en cinq étapes, sans calculette.')
         ->assertSee('Commencer une main')
         ->assertSee('Défi du jour')
-        ->assertSee('Ouvrir le barème')
-        ->assertSee('2 000 / 4 000');
+        ->assertSee('Ouvrir le barème');
 });
 
 it('affiche le barème dans l’ordre du comptage : han, fu, points', function () {

@@ -103,6 +103,7 @@ class Readings extends Component
             ->title(__('Exercice : :drill', ['drill' => Drill::Readings->label()]))
             ->layoutData([
                 'description' => __('Une main de riichi qui se lit de plusieurs façons : comptez chaque découpage et gardez le bon.'),
+                'robots' => 'noindex, follow',
             ]);
     }
 }

@@ -94,6 +94,7 @@ class Waits extends Component
             ->title(__('Exercice : :drill', ['drill' => Drill::Waits->label()]))
             ->layoutData([
                 'description' => __('Une main de riichi en attente : trouvez toutes les tuiles qui la complètent, et dites si vous êtes furiten.'),
+                'robots' => 'noindex, follow',
             ]);
     }
 }

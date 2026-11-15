@@ -1,10 +1,16 @@
 @use('App\Support\Format')
-<x-layouts::app>
+<x-layouts::app :schema="\App\View\StructuredData::home()">
     @php
         $payment = $evaluation->payment();
         $yaku = collect($evaluation->yaku())->map(fn ($y) => $y->yaku->shortLabel());
+        if ($evaluation->dora->count) {
+            $yaku->push(__('dora :count', ['count' => $evaluation->dora->count]));
+        }
         if ($evaluation->aka) {
             $yaku->push(__('aka-dora'));
+        }
+        if ($evaluation->ura->count) {
+            $yaku->push(__('ura-dora :count', ['count' => $evaluation->ura->count]));
         }
         $redShown = false;
         $steps = [
@@ -74,11 +80,17 @@
                 </div>
 
                 <div class="hero-slip mt-8 flex flex-wrap items-baseline justify-center gap-x-3 gap-y-1 px-2 text-center" aria-live="polite">
-                    <span class="display text-2xl text-gilt sm:text-3xl">{{ __('Tsumo !') }}</span>
+                    <span class="display text-2xl text-gilt sm:text-3xl">{{ $tsumo ? __('Tsumo !') : __('Ron !') }}</span>
                     <span>{{ $yaku->join(', ', ' '.__('et').' ') }}</span>
                     <span class="hidden text-felt-muted sm:inline" aria-hidden="true">·</span>
                     <span><b>{{ $evaluation->han }} han</b>, {{ strtolower($payment->limit?->label() ?? $evaluation->fu().' fu') }}</span>
-                    <span class="display num text-2xl sm:text-3xl">{{ Format::points($payment->fromOthers) }} / {{ Format::points($payment->fromDealer) }}</span>
+                    @if (! $tsumo)
+                        <span class="display num text-2xl sm:text-3xl">{{ Format::points($payment->ron) }}</span>
+                    @elseif ($evaluation->dealer)
+                        <span><span class="display num text-2xl sm:text-3xl">{{ Format::points($payment->each) }}</span> {{ __('chacun') }}</span>
+                    @else
+                        <span class="display num text-2xl sm:text-3xl">{{ Format::points($payment->fromOthers) }} / {{ Format::points($payment->fromDealer) }}</span>
+                    @endif
                 </div>
             </div>
         </div>
@@ -138,6 +150,26 @@
             </button>
         </p>
         </div>
+    </section>
+
+    {{-- Débuter : les guides, pour qui découvre le riichi. --}}
+    <section class="mx-auto mt-16 max-w-6xl px-4 sm:px-6" aria-labelledby="learn-title">
+        <div class="flex flex-wrap items-baseline justify-between gap-x-6 gap-y-2">
+            <h2 id="learn-title" class="display text-2xl sm:text-3xl">{{ __('Débuter au riichi') }}</h2>
+            <a href="{{ localized_route('learn') }}" class="font-bold underline decoration-ink-line decoration-2 underline-offset-[6px] hover:decoration-shu">{{ __('Apprendre le mahjong riichi') }}</a>
+        </div>
+        <p class="mt-2 max-w-[62ch] text-ink-muted">{{ __('Nouveau venu ? Les règles, le déroulement d’une partie et le calcul des points, expliqués simplement avant de passer à la pratique.') }}</p>
+        <ul class="mt-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+            @foreach (\App\View\Learn\Guide::cases() as $guide)
+                <li>
+                    <a href="{{ localized_route($guide->routeName()) }}" class="paper group flex h-full flex-col gap-3 p-5 transition-shadow hover:shadow-[inset_0_0_0_2px_var(--ink)]">
+                        <span class="step-tile" aria-hidden="true"><x-glyph :char="$guide->glyph()" class="size-[1.15rem]" /></span>
+                        <span class="font-bold group-hover:underline group-hover:decoration-shu group-hover:decoration-2 group-hover:underline-offset-4">{{ $guide->label() }}</span>
+                        <span class="text-sm text-ink-muted">{{ $guide->summary() }}</span>
+                    </a>
+                </li>
+            @endforeach
+        </ul>
     </section>
 
     {{-- Vos progrès : seulement s'il y en a. --}}

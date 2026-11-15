@@ -18,6 +18,7 @@
   ],
   "shortcuts": [
     { "name": "Défi du jour", "url": "/defi" },
-    { "name": "Barème", "url": "/bareme" }
+    { "name": "Barème", "url": "/bareme" },
+    { "name": "Apprendre", "url": "/apprendre" }
   ]
 }
