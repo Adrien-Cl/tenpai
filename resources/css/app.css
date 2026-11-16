@@ -419,6 +419,31 @@
         filter: drop-shadow(0 calc(var(--tile, 2.5rem) * 0.07) calc(var(--tile, 2.5rem) * 0.06) var(--tile-shadow));
     }
 
+    /* Main à ranger (attentes) : la tuile saisie suit le doigt, sa place reste vide jusqu'au dépôt.
+       touch-action: none, sinon le navigateur prend le geste pour un défilement et annule le glisser. */
+    .arrangeable > .tile {
+        cursor: grab;
+        touch-action: none;
+        -webkit-user-select: none;
+        user-select: none;
+        -webkit-touch-callout: none;
+    }
+
+    /* Le doigt doit viser la tuile, pas le <use> du SVG : déplacée, la tuile reconstruit son <use>,
+       et Chrome n'enverrait plus le touchend qui termine le glisser. */
+    .arrangeable > .tile > svg {
+        pointer-events: none;
+    }
+
+    .tile.sortable-fallback {
+        cursor: grabbing;
+        filter: drop-shadow(0 0.4rem 0.5rem var(--tile-shadow));
+    }
+
+    body.sorting {
+        cursor: grabbing;
+    }
+
     .tile--win {
         translate: 0 calc(var(--t) * -0.12);
     }

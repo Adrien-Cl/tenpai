@@ -48,18 +48,34 @@
                 @if ($h->riichi)
                     <span class="rounded-lg bg-felt-deep/60 px-3 py-2 text-sm font-bold text-felt-ink">Riichi</span>
                 @endif
-                <button type="button" class="ml-auto rounded-lg px-3 py-2 text-sm text-felt-muted hover:bg-felt-raised hover:text-felt-ink sm:ml-0" x-on:click="share()">
-                    <span x-show="!copied">{{ __('Partager cette main') }}</span>
-                    <span x-cloak x-show="copied" class="text-gilt">{{ __('Lien copié') }}</span>
-                </button>
+                <span class="ml-auto flex flex-wrap items-center gap-1 sm:ml-0">
+                    {{-- Une autre main tant que celle-ci n'est pas corrigée (ensuite, « Main suivante » en bas). Une main passée ne compte pas. --}}
+                    @unless ($result)
+                        <button type="button" class="rounded-lg px-3 py-2 text-sm text-felt-muted hover:bg-felt-raised hover:text-felt-ink disabled:opacity-60" wire:click="nextHand" wire:loading.attr="disabled" data-reroll>
+                            {{ __('Changer de main') }}
+                        </button>
+                    @endunless
+                    <button type="button" class="rounded-lg px-3 py-2 text-sm text-felt-muted hover:bg-felt-raised hover:text-felt-ink" x-on:click="share()">
+                        <span x-show="!copied">{{ __('Partager cette main') }}</span>
+                        <span x-cloak x-show="copied" class="text-gilt">{{ __('Lien copié') }}</span>
+                    </button>
+                </span>
             </div>
         </div>
 
         <div class="mt-6 flex flex-wrap items-end gap-x-[calc(var(--tile)*0.55)] gap-y-5 [--tile:clamp(1.15rem,calc((100vw-5.5rem)/14.4),3.15rem)] sm:mt-10 sm:[--tile:clamp(1.15rem,calc((100vw-8.5rem)/15),3.15rem)]">
-            <span class="tiles gap-px" aria-label="{{ __('Tuiles en main') }}" data-waiting-hand>
-                @foreach ($g->handTiles as $t)
-                    <x-tile :tile="$t->tile" :red="$t->red" />
-                @endforeach
+            {{-- Le joueur range sa main à sa guise (glisser-déposer, dans le navigateur seulement) ; wire:ignore garde son ordre après la correction. --}}
+            <span class="flex flex-col items-center" x-data="arrangeableHand" wire:ignore>
+                <span class="tiles arrangeable gap-px" aria-label="{{ __('Tuiles en main') }}" data-waiting-hand
+                      x-sort="moved = true" x-sort:config="{ forceFallback: true, fallbackOnBody: true, fallbackTolerance: 3 }" x-ref="hand">
+                    @foreach ($g->handTiles as $t)
+                        <x-tile :tile="$t->tile" :red="$t->red" />
+                    @endforeach
+                </span>
+                <span class="mt-3 w-0 min-w-full text-center text-xs text-felt-muted" x-show="!moved">{{ __('Glissez les tuiles pour ranger votre main') }}</span>
+                <button type="button" x-cloak x-show="moved" x-on:click="restore()" class="mt-1.5 rounded-md px-2 py-1 text-xs whitespace-nowrap text-felt-muted hover:bg-felt-raised hover:text-felt-ink" data-restore-hand>
+                    {{ __('Remettre dans l’ordre') }}
+                </button>
             </span>
             <span class="flex flex-col items-center" aria-hidden="true">
                 <span class="block h-[calc(var(--tile)*46/34)] w-(--tile) rounded-[3px] border-2 border-dashed border-felt-line"></span>

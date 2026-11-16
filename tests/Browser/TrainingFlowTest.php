@@ -92,6 +92,58 @@ it('ouvre l’exercice des attentes depuis le menu', function () {
         ->assertNoJavaScriptErrors();
 });
 
+it('change de main dans l’exercice des attentes sans y répondre', function () {
+    $page = visit('/attentes/expert-chinitsu-test0001');
+
+    $page->click('Changer de main')
+        ->assertPathBeginsWith('/attentes/expert-chinitsu-')
+        ->assertPathIsNot('/attentes/expert-chinitsu-test0001')
+        ->assertSee('Quelles tuiles complètent la main ?')
+        ->assertNoJavaScriptErrors();
+});
+
+it('laisse ranger la main des attentes, et garde l’ordre après la correction', function () {
+    $page = visit('/attentes/tenpai');
+    $order = fn () => $page->script('[...document.querySelectorAll("[data-waiting-hand] > .tile")].map((tile) => tile.getAttribute("aria-label")).join("|")');
+    $before = $order();
+
+    // Le glisser se fait au pointeur (comme au doigt), pas à pas : drag() saute d'un coup au point d'arrivée.
+    $page->script(<<<'JS'
+        (async () => {
+            const tiles = [...document.querySelectorAll('[data-waiting-hand] > .tile')];
+            const center = (tile) => { const box = tile.getBoundingClientRect(); return [box.x + box.width / 2, box.y + box.height / 2]; };
+            const [x0, y0] = center(tiles[0]);
+            const [x1, y1] = center(tiles.at(-1));
+            const pointer = (type, target, x, y) => target.dispatchEvent(new PointerEvent(type, { bubbles: true, cancelable: true, clientX: x, clientY: y, pointerType: 'mouse', isPrimary: true, buttons: 1 }));
+            const wait = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+
+            pointer('pointerdown', tiles[0], x0, y0);
+            for (let step = 1; step <= 20; step++) {
+                pointer('pointermove', document, x0 + ((x1 - x0) * step) / 20, y0 + ((y1 - y0) * step) / 20);
+                await wait(16);
+            }
+            await wait(200);
+            pointer('pointerup', document, x1, y1);
+            document.dispatchEvent(new MouseEvent('mouseup', { bubbles: true, clientX: x1, clientY: y1 }));
+            await wait(300);
+        })()
+        JS);
+
+    $page->assertVisible('[data-restore-hand]');
+
+    $after = $order();
+    expect($after)->not->toBe($before);
+
+    $page->click('Voir la réponse')
+        ->assertVisible('[data-waits-answer]');
+    expect($order())->toBe($after);
+
+    $page->click('[data-restore-hand]');
+    expect($order())->toBe($before);
+
+    $page->assertNoJavaScriptErrors();
+});
+
 it('parle anglais jusque dans les messages du JavaScript', function () {
     $page = visit('/en/counting/tenpai');
 

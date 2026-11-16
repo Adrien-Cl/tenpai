@@ -39,6 +39,12 @@ final class TileArt
 
     private const array PIN_COLORS = [2 => 'gb', 3 => 'brg', 4 => 'bggb', 5 => 'bgrgb', 6 => 'ggrrrr', 7 => 'gggrrrr', 8 => 'bbbbbbbb', 9 => 'bbbrrrggg'];
 
+    /**
+     * Tiges des bambous : centre, et inclinaison en degrés (sens horaire) pour les tiges penchées.
+     * Le 8 : une tige droite de chaque côté, et quatre tiges penchées en losange (un Λ en haut, un V en bas).
+     *
+     * @var array<int, list<array{0: float|int, 1: float|int, 2?: float|int}>>
+     */
     private const array SOU = [
         2 => [[15, 11], [15, 29]],
         3 => [[15, 11], [9, 29], [21, 29]],
@@ -46,7 +52,10 @@ final class TileArt
         5 => [[8, 11], [22, 11], [15, 20], [8, 29], [22, 29]],
         6 => [[7, 11], [15, 11], [23, 11], [7, 29], [15, 29], [23, 29]],
         7 => [[15, 7.5], [7, 20.5], [15, 20.5], [23, 20.5], [7, 32.5], [15, 32.5], [23, 32.5]],
-        8 => [[6, 11], [12, 11], [18, 11], [24, 11], [6, 29], [12, 29], [18, 29], [24, 29]],
+        8 => [
+            [5.4, 11], [11.75, 12, 33], [18.25, 12, -33], [24.6, 11],
+            [5.4, 29], [11.75, 28, -33], [18.25, 28, 33], [24.6, 29],
+        ],
         9 => [[7, 8], [15, 8], [23, 8], [7, 20], [15, 20], [23, 20], [7, 32], [15, 32], [23, 32]],
     ];
 
@@ -89,12 +98,13 @@ final class TileArt
                 return self::souOne($red);
             }
 
-            $height = $number >= 7 ? 9.6 : 14.4;
+            $height = in_array($number, [7, 9], true) ? 9.6 : 14.4;
             $sticks = '';
 
-            foreach (self::SOU[$number] as $index => [$x, $y]) {
+            foreach (self::SOU[$number] as $index => $stick) {
+                [$x, $y] = $stick;
                 $isRed = $red || in_array($index, self::SOU_RED[$number] ?? [], true);
-                $sticks .= self::stick($x, $y, $height, $isRed ? self::RED : self::GREEN);
+                $sticks .= self::stick($x, $y, $height, $isRed ? self::RED : self::GREEN, $stick[2] ?? 0);
             }
 
             return $sticks;
@@ -239,10 +249,14 @@ final class TileArt
     }
 
     /**
-     * Tige de bambou sculptée : fine, cintrée entre trois nœuds, avec un reflet.
+     * Tige de bambou sculptée : fine, cintrée entre trois nœuds, avec un reflet. Penchée autour de son centre si $angle ≠ 0.
      */
-    private static function stick(float $x, float $y, float $height, string $color): string
+    private static function stick(float $x, float $y, float $height, string $color, float $angle = 0): string
     {
+        if ($angle != 0) {
+            return '<g transform="rotate('.self::r($angle).' '.$x.' '.$y.')">'.self::stick($x, $y, $height, $color).'</g>';
+        }
+
         $width = 3;
         $pinch = 0.6;
         $top = self::r($y - $height / 2);

@@ -42,7 +42,7 @@ it('affiche la main en attente, sans la tuile gagnante', function () {
         ->assertDontSee('aria-label="Tuile gagnante"', false)
         ->getContent();
 
-    preg_match('/data-waiting-hand>(.*?)<\/span>\s*<span class="flex flex-col/s', $html, $handTiles);
+    preg_match('/data-waiting-hand[^>]*>(.*?)<\/span>\s*<span class="mt-3/s', $html, $handTiles);
 
     expect(substr_count($handTiles[1], 'class="tile'))->toBe(count($hand->closed))
         ->and(count($hand->closed) + 3 * count($hand->hand()->melds))->toBe(13);
@@ -117,6 +117,13 @@ it('passe à une main suivante du même niveau et du même thème', function () 
     Livewire::test(Waits::class, ['seed' => 'expert-chinitsu-test0001'])
         ->call('nextHand')
         ->assertRedirectContains('/attentes/expert-chinitsu-');
+});
+
+it('propose de changer de main tant que la main n’est pas corrigée', function () {
+    Livewire::test(Waits::class, ['seed' => 'tenpai'])
+        ->assertSeeHtml('data-reroll')
+        ->call('reveal')
+        ->assertDontSeeHtml('data-reroll');
 });
 
 it('tire une main depuis sa propre page, avec thème et niveau', function () {
