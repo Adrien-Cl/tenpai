@@ -42,7 +42,7 @@ it('affiche la main en attente, sans la tuile gagnante', function () {
         ->assertDontSee('aria-label="Tuile gagnante"', false)
         ->getContent();
 
-    preg_match('/data-waiting-hand>(.*?)<\/span>\s*<span class="flex flex-col/s', $html, $handTiles);
+    preg_match('/data-waiting-hand[^>]*>(.*?)<\/span>\s*<span class="mt-3/s', $html, $handTiles);
 
     expect(substr_count($handTiles[1], 'class="tile'))->toBe(count($hand->closed))
         ->and(count($hand->closed) + 3 * count($hand->hand()->melds))->toBe(13);

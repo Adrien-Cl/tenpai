@@ -262,6 +262,26 @@ document.addEventListener('alpine:init', () => {
     }));
 
     /**
+     * Main à ranger (attentes) : x-sort déplace les tuiles ; restore() les remet dans l'ordre d'origine,
+     * avant le marqueur de fin de boucle laissé par Livewire.
+     */
+    Alpine.data('arrangeableHand', () => ({
+        moved: false,
+        original: [],
+
+        init() {
+            this.original = [...this.$refs.hand.children];
+        },
+
+        restore() {
+            const hand = this.$refs.hand;
+            const end = [...hand.childNodes].findLast((node) => node.nodeType === Node.COMMENT_NODE) ?? null;
+            this.original.forEach((tile) => hand.insertBefore(tile, end));
+            this.moved = false;
+        },
+    }));
+
+    /**
      * Bouton du fond (en-tête) : passe du clair au foncé et inversement. L'icône suit le CSS ; ici, l'état annoncé.
      */
     Alpine.data('backdropToggle', (themeColors) => ({
