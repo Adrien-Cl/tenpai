@@ -48,10 +48,18 @@
                 @if ($h->riichi)
                     <span class="rounded-lg bg-felt-deep/60 px-3 py-2 text-sm font-bold text-felt-ink">Riichi</span>
                 @endif
-                <button type="button" class="ml-auto rounded-lg px-3 py-2 text-sm text-felt-muted hover:bg-felt-raised hover:text-felt-ink sm:ml-0" x-on:click="share()">
-                    <span x-show="!copied">{{ __('Partager cette main') }}</span>
-                    <span x-cloak x-show="copied" class="text-gilt">{{ __('Lien copié') }}</span>
-                </button>
+                <span class="ml-auto flex flex-wrap items-center gap-1 sm:ml-0">
+                    {{-- Une autre main tant que celle-ci n'est pas corrigée (ensuite, « Main suivante » en bas). Une main passée ne compte pas. --}}
+                    @unless ($result)
+                        <button type="button" class="rounded-lg px-3 py-2 text-sm text-felt-muted hover:bg-felt-raised hover:text-felt-ink disabled:opacity-60" wire:click="nextHand" wire:loading.attr="disabled" data-reroll>
+                            {{ __('Changer de main') }}
+                        </button>
+                    @endunless
+                    <button type="button" class="rounded-lg px-3 py-2 text-sm text-felt-muted hover:bg-felt-raised hover:text-felt-ink" x-on:click="share()">
+                        <span x-show="!copied">{{ __('Partager cette main') }}</span>
+                        <span x-cloak x-show="copied" class="text-gilt">{{ __('Lien copié') }}</span>
+                    </button>
+                </span>
             </div>
         </div>
 

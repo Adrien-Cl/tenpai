@@ -92,6 +92,16 @@ it('ouvre l’exercice des attentes depuis le menu', function () {
         ->assertNoJavaScriptErrors();
 });
 
+it('change de main dans l’exercice des attentes sans y répondre', function () {
+    $page = visit('/attentes/expert-chinitsu-test0001');
+
+    $page->click('Changer de main')
+        ->assertPathBeginsWith('/attentes/expert-chinitsu-')
+        ->assertPathIsNot('/attentes/expert-chinitsu-test0001')
+        ->assertSee('Quelles tuiles complètent la main ?')
+        ->assertNoJavaScriptErrors();
+});
+
 it('laisse ranger la main des attentes, et garde l’ordre après la correction', function () {
     $page = visit('/attentes/tenpai');
     $order = fn () => $page->script('[...document.querySelectorAll("[data-waiting-hand] > .tile")].map((tile) => tile.getAttribute("aria-label")).join("|")');

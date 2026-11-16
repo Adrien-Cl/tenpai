@@ -119,6 +119,13 @@ it('passe à une main suivante du même niveau et du même thème', function () 
         ->assertRedirectContains('/attentes/expert-chinitsu-');
 });
 
+it('propose de changer de main tant que la main n’est pas corrigée', function () {
+    Livewire::test(Waits::class, ['seed' => 'tenpai'])
+        ->assertSeeHtml('data-reroll')
+        ->call('reveal')
+        ->assertDontSeeHtml('data-reroll');
+});
+
 it('tire une main depuis sa propre page, avec thème et niveau', function () {
     $location = $this->get('/attentes?theme=chinitsu&niveau=expert')->assertRedirect()->headers->get('Location');
 
