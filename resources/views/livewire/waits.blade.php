@@ -67,7 +67,7 @@
             {{-- Le joueur range sa main à sa guise (glisser-déposer, dans le navigateur seulement) ; wire:ignore garde son ordre après la correction. --}}
             <span class="flex flex-col items-center" x-data="arrangeableHand" wire:ignore>
                 <span class="tiles arrangeable gap-px" aria-label="{{ __('Tuiles en main') }}" data-waiting-hand
-                      x-sort="moved = true" x-sort:config="{ forceFallback: true, fallbackOnBody: true, fallbackTolerance: 3 }" x-ref="hand">
+                      x-init="$store.sound.play('deal')" x-sort="moved = true; $store.sound.play('tile')" x-sort:config="{ forceFallback: true, fallbackOnBody: true, fallbackTolerance: 3 }" x-ref="hand">
                     @foreach ($g->handTiles as $t)
                         <x-tile :tile="$t->tile" :red="$t->red" />
                     @endforeach

@@ -44,7 +44,7 @@
             @endif
         </header>
 
-        <form wire:submit="check" class="mt-4">
+        <form wire:submit="check" class="mt-4" x-init="$store.sound.play('deal')">
             <div class="grid gap-4 px-4 pb-6 sm:px-8 sm:pb-8 md:grid-cols-2">
                 @foreach ($readingsHand->readings as $index => $reading)
                     <article @class([

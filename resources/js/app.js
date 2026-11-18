@@ -2,12 +2,14 @@ import { prepare, suggest, notYakuHint } from './yaku-search';
 import { pageLocale, t } from './text';
 import { applyChoice, choiceCookie, choiceFor, readChoice } from './backdrop';
 import { handHtml, seedCaption } from './review';
+import { createPlayer, shouldHover, soundForResult } from './sound';
 
 const darkSystem = window.matchMedia('(prefers-color-scheme: dark)');
 
 const STEP_KEYS = ['yaku', 'han', 'dora', 'fu', 'points'];
 const emptyProgress = () => ({ hands: 0, perfect: 0, streak: 0, best: 0, steps: {}, seen: [], missedYaku: {} });
 const REVIEW_SIZE = 20;
+const player = createPlayer();
 
 document.addEventListener('alpine:init', () => {
     const Alpine = window.Alpine;
@@ -177,6 +179,23 @@ document.addEventListener('alpine:init', () => {
     });
 
     /**
+     * Sons de l'interface, activés par défaut ; le choix reste dans ce navigateur.
+     */
+    Alpine.store('sound', {
+        on: Alpine.$persist(true).as('tenpai-sons'),
+
+        // Rallumés d'un clic : ce geste ouvre le contexte audio, pour que le tic du bouton s'entende.
+        toggle() {
+            this.on = !this.on;
+            if (this.on) player.unlock();
+        },
+
+        play(name) {
+            if (this.on) player.play(name);
+        },
+    });
+
+    /**
      * Calendrier des défis : les cinq dernières semaines, du lundi au dimanche, et la série en cours.
      * Les dates sont calculées en UTC à partir du jour donné par le serveur (heure de Paris).
      */
@@ -278,6 +297,7 @@ document.addEventListener('alpine:init', () => {
             const end = [...hand.childNodes].findLast((node) => node.nodeType === Node.COMMENT_NODE) ?? null;
             this.original.forEach((tile) => hand.insertBefore(tile, end));
             this.moved = false;
+            Alpine.store('sound').play('deal');
         },
     }));
 
@@ -512,6 +532,41 @@ if ('serviceWorker' in navigator && window.isSecureContext) {
 
 // Fond : une page rendue avant le dernier choix (retour arrière de wire:navigate, page hors ligne) le reprend.
 document.addEventListener('livewire:navigated', () => applyChoice(readChoice(document.cookie)));
+
+/**
+ * Sons : le premier geste ouvre le contexte audio. Un bouton fait un tic, une tuile cochée claque,
+ * une tuile survolée à la souris sonne à peine ; une correction (événement Livewire) dit juste ou à revoir.
+ * Le bouton qui coupe les sons agit avant ce tic : il ne sonne qu'en les rallumant.
+ */
+const playSound = (name) => window.Alpine?.store('sound')?.play(name);
+const unlockSound = () => {
+    if (window.Alpine?.store('sound')?.on) player.unlock();
+};
+let lastHover = { tile: null, time: 0 };
+
+document.addEventListener('pointerdown', unlockSound, { capture: true });
+document.addEventListener('keydown', unlockSound, { capture: true });
+
+document.addEventListener('click', (event) => {
+    if (event.target.closest('button, .btn, [role="tab"]')) playSound('tap');
+});
+
+document.addEventListener('change', (event) => {
+    if (!event.target.matches('input[type="checkbox"], input[type="radio"]')) return;
+    playSound(event.target.closest('.pick') ? 'tile' : 'tap');
+});
+
+document.addEventListener('pointerover', (event) => {
+    if (event.pointerType !== 'mouse') return;
+    const tile = event.target.closest?.('.tile');
+    if (!tile) return;
+    const now = performance.now();
+    if (!shouldHover(lastHover, tile, now)) return;
+    lastHover = { tile, time: now };
+    playSound('hover');
+});
+
+window.addEventListener('answer-checked', (event) => playSound(soundForResult(event.detail)));
 
 // Raccourcis clavier : B ouvre le barème, N passe à la main suivante (quand la main est finie).
 document.addEventListener('keydown', (event) => {

@@ -314,5 +314,12 @@ jobs:
       - name: Audit Composer
         run: composer audit --locked --no-interaction
 
-      - name: Audit npm
+      # Bloquant pour ce qui part en production. Les outils de build et de test (Vite, Vitest) ne quittent pas la CI
+      # ni l'étape « assets » du Dockerfile : leurs alertes restent affichées, sans bloquer quand aucun correctif n'existe.
+      - name: Audit npm (production)
+        run: npm audit --audit-level=high --omit=dev
+
+      - name: Audit npm (outils de développement, informatif)
+        continue-on-error: true
         run: npm audit --audit-level=high
+

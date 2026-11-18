@@ -95,6 +95,7 @@ class Readings extends Component
         $this->result = $checked['result'];
 
         $this->dispatch('drill-finished', seed: $this->seed, drill: Drill::Readings->value, perfect: $this->result['ok']);
+        $this->dispatch('answer-checked', ok: $this->result['ok'], revealed: $this->result['revealed'], perfect: $this->result['ok']);
     }
 
     public function render()

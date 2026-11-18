@@ -56,7 +56,8 @@ it('valide les bonnes attentes et le bon furiten', function (bool $furiten) {
         ->call('check')
         ->assertSet('result.ok', true)
         ->assertSet('result.furiten.state', 'ok')
-        ->assertDispatched('drill-finished', seed: $seed, drill: 'attentes', perfect: true);
+        ->assertDispatched('drill-finished', seed: $seed, drill: 'attentes', perfect: true)
+        ->assertDispatched('answer-checked', ok: true, revealed: false, perfect: true);
 })->with([
     'furiten' => [true],
     'pas furiten' => [false],
@@ -71,7 +72,8 @@ it('signale une attente oubliée et une tuile en trop', function () {
         ->set('answers', ['waits' => array_map(strval(...), $picked), 'furiten' => $hand->isFuriten() ? 'oui' : 'non'])
         ->call('check')
         ->assertSet('result.ok', false)
-        ->assertDispatched('drill-finished', perfect: false);
+        ->assertDispatched('drill-finished', perfect: false)
+        ->assertDispatched('answer-checked', ok: false, revealed: false, perfect: false);
 
     expect($component->get('result.tiles'))
         ->toHaveKey($hand->waits[0], 'missed')
@@ -94,6 +96,7 @@ it('montre la réponse sans compter l’exercice comme réussi', function () {
         ->call('reveal')
         ->assertSet('result.ok', false)
         ->assertSet('result.revealed', true)
+        ->assertDispatched('answer-checked', ok: false, revealed: true)
         ->assertSet('answers', waitsAnswers('tenpai'))
         ->assertSee('Attentes : ');
 });
