@@ -54,7 +54,8 @@ it('valide les han, les fu et la lecture qui compte', function () {
         ->call('check')
         ->assertSet('result.ok', true)
         ->assertSet('result.fields.choice.state', 'ok')
-        ->assertDispatched('drill-finished', seed: 'tenpai', drill: 'lectures', perfect: true);
+        ->assertDispatched('drill-finished', seed: 'tenpai', drill: 'lectures', perfect: true)
+        ->assertDispatched('answer-checked', ok: true, revealed: false, perfect: true);
 });
 
 it('compte faux le choix d’une lecture moins payante', function () {
@@ -66,6 +67,7 @@ it('compte faux le choix d’une lecture moins payante', function () {
         ->call('check')
         ->assertSet('result.ok', false)
         ->assertSet('result.fields.choice.state', 'ko')
+        ->assertDispatched('answer-checked', ok: false, revealed: false)
         ->assertSet('result.fields.han0.state', 'ok')
         ->assertSee('On garde toujours la lecture la plus payante');
 });
@@ -87,6 +89,7 @@ it('montre la réponse sans compter l’exercice comme réussi', function () {
         ->call('reveal')
         ->assertSet('result.ok', false)
         ->assertSet('result.revealed', true)
+        ->assertDispatched('answer-checked', ok: false, revealed: true)
         ->assertSet('answers.choice', readingsAnswers('tenpai')['choice'])
         ->assertSee('Paie ');
 });

@@ -80,6 +80,7 @@ it('valide une étape juste', function () {
         ->set('answers.yaku.picked', $answers['yaku']['picked'])
         ->call('check')
         ->assertSet('results.0.ok', true)
+        ->assertDispatched('answer-checked', ok: true, revealed: false, perfect: false)
         ->assertSet('step', 0)
         ->call('next')
         ->assertSet('step', 1)
@@ -92,6 +93,7 @@ it('signale une étape fausse et donne la bonne valeur', function () {
         ->set('answers.yaku.picked', ['riichi'])
         ->call('check')
         ->assertSet('results.0.ok', false)
+        ->assertDispatched('answer-checked', ok: false, revealed: false)
         ->assertSet('results.0.fields.riichi.state', 'extra')
         ->assertSee('n’est pas dans cette main');
 });
@@ -103,6 +105,7 @@ it('montre la réponse sans compter l’étape comme juste', function () {
         ->call('reveal')
         ->assertSet('results.0.ok', false)
         ->assertSet('results.0.revealed', true)
+        ->assertDispatched('answer-checked', ok: false, revealed: true)
         ->assertSet('answers.yaku.picked', $answers['yaku']['picked']);
 });
 
@@ -131,7 +134,8 @@ it('mène une main juste jusqu’au récapitulatif et annonce la fin', function 
     foreach (['yaku', 'han', 'dora', 'fu', 'points'] as $index => $key) {
         $component->set("answers.{$key}", $answers[$key])
             ->call('check')
-            ->assertSet("results.{$index}.ok", true);
+            ->assertSet("results.{$index}.ok", true)
+            ->assertDispatched('answer-checked', ok: true, perfect: $key === 'points');
 
         if ($key === 'points') {
             $component->assertDispatched('hand-finished', seed: 'tenpai', results: [true, true, true, true, true], daily: null,
@@ -217,6 +221,7 @@ it('compte un exercice court sans faute sur les seules étapes jouées', functio
         ->set('answers.points', $answers['points'])
         ->call('check')
         ->assertDispatched('hand-finished', drill: 'fu', first: 3)
+        ->assertDispatched('answer-checked', ok: true, perfect: true)
         ->call('next');
 
     $component->assertSee('2 étapes justes sur 2')->assertSee('Sans faute');

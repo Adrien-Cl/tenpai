@@ -212,6 +212,17 @@ class Training extends Component
     }
 
     /**
+     * Toutes les étapes jouées sont justes (celles données d'avance, dans un exercice court, ne comptent pas).
+     */
+    private function isPerfect(): bool
+    {
+        $played = array_slice($this->results, $this->firstStep(), preserve_keys: true);
+
+        return count($played) === $this->playedSteps()
+            && array_all($played, fn (array $result): bool => $result['ok']);
+    }
+
+    /**
      * Remplit les étapes avant la première jouée avec leurs réponses, sans les compter.
      */
     private function giveStepsBefore(int $first): void
@@ -241,7 +252,15 @@ class Training extends Component
         $this->answers[$step->key()] = $checked['answers'];
         $this->results[$this->step] = $checked['result'];
 
-        if ($this->step === self::RECAP - 1) {
+        $isLastStep = $this->step === self::RECAP - 1;
+        $this->dispatch(
+            'answer-checked',
+            ok: $checked['result']['ok'],
+            revealed: $checked['result']['revealed'],
+            perfect: $isLastStep && $this->isPerfect(),
+        );
+
+        if ($isLastStep) {
             $this->dispatch(
                 'hand-finished',
                 seed: $this->seed,

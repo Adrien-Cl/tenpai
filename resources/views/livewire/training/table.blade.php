@@ -60,7 +60,7 @@
 
     {{-- La main : tuiles cachées, tuile gagnante à part, appels à droite. --}}
     <div class="mt-6 flex flex-wrap items-end gap-x-[calc(var(--tile)*0.55)] gap-y-5 [--tile:clamp(1.15rem,calc((100vw-5.5rem)/15.2),3.15rem)] sm:mt-10 sm:gap-y-6 sm:[--tile:clamp(1.15rem,calc((100vw-8.5rem)/15.6),3.15rem)]">
-        <span class="tiles gap-[1px]" aria-label="{{ __('Tuiles en main') }}">
+        <span class="tiles gap-[1px]" x-init="$store.sound.play('deal')" aria-label="{{ __('Tuiles en main') }}">
             @foreach ($g->handTiles as $i => $t)
                 @php($key = $groups['hand'][$i] ?? null)
                 <x-tile :tile="$t->tile" :red="$t->red" :group="$key" />
