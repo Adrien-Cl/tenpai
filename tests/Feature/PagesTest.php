@@ -59,3 +59,21 @@ it('répond 304 quand le sprite n’a pas changé', function () {
     $this->get(TileSprite::url(), ['If-None-Match' => '"'.TileSprite::version().'"'])
         ->assertStatus(304);
 });
+
+it('sert sans session ni cookie ce que Cloudflare et les navigateurs gardent en cache', function (Closure|string $path) {
+    $response = $this->get(value($path));
+
+    $response->assertSuccessful();
+    expect($response->headers->getCookies())->toBeEmpty();
+})->with([
+    'le sprite des tuiles' => fn (): string => TileSprite::url(),
+    'l’aperçu d’une main' => '/apercu/tenpai.png',
+    'l’aperçu d’une main en anglais' => '/en/preview/tenpai.png',
+    'les tuiles des mains à revoir' => '/mains.json?graines=tenpai',
+    'le sitemap' => '/sitemap.xml',
+    'robots.txt' => '/robots.txt',
+]);
+
+it('garde la session des pages, dont le jeton CSRF des formulaires', function () {
+    $this->get('/bareme')->assertCookie('XSRF-TOKEN');
+});

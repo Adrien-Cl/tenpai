@@ -20,7 +20,12 @@ use App\Livewire\Waits;
 use App\Support\Locale;
 use App\Training\Drill;
 use App\View\Learn\Guide;
+use Illuminate\Cookie\Middleware\AddQueuedCookiesToResponse;
+use Illuminate\Cookie\Middleware\EncryptCookies;
+use Illuminate\Foundation\Http\Middleware\PreventRequestForgery;
+use Illuminate\Session\Middleware\StartSession;
 use Illuminate\Support\Facades\Route;
+use Illuminate\View\Middleware\ShareErrorsFromSession;
 
 /*
 | Les pages, une fois par langue : le français sans préfixe (noms « counting »…),
@@ -29,11 +34,24 @@ use Illuminate\Support\Facades\Route;
 
 $seed = '[A-Za-z0-9][A-Za-z0-9-]{0,39}';
 
+/*
+| Les fichiers servis par l'application (sprite, aperçus, JSON, sitemap) : ni session ni cookie.
+| Une réponse qui pose un cookie n'est pas gardée par Cloudflare : chaque visite remonterait jusqu'au serveur,
+| et y créerait une session pour rien. Ces routes ne répondent qu'en GET : sans formulaire, pas de jeton CSRF.
+*/
+$stateless = [
+    EncryptCookies::class,
+    AddQueuedCookiesToResponse::class,
+    StartSession::class,
+    ShareErrorsFromSession::class,
+    PreventRequestForgery::class,
+];
+
 foreach (Locale::LOCALES as $locale => $words) {
     Route::middleware(SetLocale::class.':'.$locale)
         ->prefix($words['prefix'])
         ->name($locale === Locale::DEFAULT ? '' : "{$locale}.")
-        ->group(function () use ($words, $seed): void {
+        ->group(function () use ($words, $seed, $stateless): void {
             Route::get('/', HomeController::class)->name('home');
 
             Route::get("/{$words['counting']}", TrainingController::class)->name('counting');
@@ -63,6 +81,7 @@ foreach (Locale::LOCALES as $locale => $words) {
             Route::get("/{$words['preview']}/{seed}.png", HandPreviewController::class)
                 ->where('seed', $seed)
                 ->middleware('throttle:preview')
+                ->withoutMiddleware($stateless)
                 ->name('preview');
 
             Route::get("/{$words['daily']}", DailyController::class)->name('daily');
@@ -82,12 +101,14 @@ foreach (Locale::LOCALES as $locale => $words) {
 
 Route::post('/regles', RulesController::class)->name('rules');
 
-Route::get('/tuiles.svg', TileSpriteController::class)->name('tiles.sprite');
+Route::withoutMiddleware($stateless)->group(function (): void {
+    Route::get('/tuiles.svg', TileSpriteController::class)->name('tiles.sprite');
 
-Route::get('/sitemap.xml', SitemapController::class)->name('sitemap');
+    Route::get('/sitemap.xml', SitemapController::class)->name('sitemap');
 
-Route::get('/robots.txt', RobotsController::class)->name('robots');
+    Route::get('/robots.txt', RobotsController::class)->name('robots');
 
-Route::get('/mains.json', HandTilesController::class)
-    ->middleware('throttle:hands')
-    ->name('hands.tiles');
+    Route::get('/mains.json', HandTilesController::class)
+        ->middleware('throttle:hands')
+        ->name('hands.tiles');
+});

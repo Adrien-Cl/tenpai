@@ -54,6 +54,10 @@ opcache.enable = 1
 opcache.validate_timestamps = 0
 opcache.memory_consumption = 128
 opcache.max_accelerated_files = 20000
+opcache.interned_strings_buffer = 16
+; Les fichiers ne changent pas dans l'image : leurs chemins résolus sont gardés dix minutes.
+realpath_cache_size = 4096K
+realpath_cache_ttl = 600
 EOF
 
 WORKDIR /var/www/html

@@ -255,6 +255,23 @@ jobs:
           echo "/tuiles.svg (gzip) → $encoding"
           [[ $encoding == gzip ]] || { echo "::error::/tuiles.svg attendu compressé en gzip, reçu « $encoding »"; exit 1; }
 
+          # Les fichiers servis par l'application ne posent aucun cookie : sinon Cloudflare ne les garde pas en cache.
+          sprite=$(curl -sS "$base/" | grep -oE '/tuiles\.svg\?v=[a-z0-9]+' | head -n1)
+          [[ -n $sprite ]] || { echo "::error::Aucun sprite des tuiles dans la page d'accueil"; exit 1; }
+          for path in "$sprite" /apercu/tenpai.png /sitemap.xml /robots.txt '/mains.json?graines=tenpai'; do
+            cookies=$(curl -sS -o /dev/null -D - "$base$path" | grep -ci '^set-cookie:' || true)
+            echo "$path (cookies) → $cookies"
+            [[ $cookies == 0 ]] || { echo "::error::$path pose un cookie : Cloudflare ne le gardera pas en cache"; exit 1; }
+          done
+
+          # Les pages gardent leur session (jeton CSRF), dans un cookie : aucun fichier de session sur le disque.
+          headers=$(curl -sS -o /dev/null -D - "$base/bareme")
+          grep -qi '^set-cookie: tenpai-session=' <<<"$headers" \
+            || { echo "::error::/bareme ne pose pas le cookie de session"; exit 1; }
+          sessions=$(docker compose exec -T app sh -c 'find storage/framework/sessions -type f ! -name .gitignore | wc -l')
+          echo "Fichiers de session → $sessions"
+          [[ $sessions == 0 ]] || { echo "::error::Des sessions sont écrites sur le disque ($sessions fichiers)"; exit 1; }
+
           # L'ancienne adresse du comptage (liens partagés, mains à revoir) redirige définitivement vers la nouvelle.
           redirect=$(curl -sS -o /dev/null -w '%{http_code} %{redirect_url}' "$base/entrainement/tenpai")
           echo "/entrainement/tenpai → $redirect"

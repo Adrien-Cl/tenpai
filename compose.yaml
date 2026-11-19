@@ -7,7 +7,10 @@ services:
     pull_policy: build
     restart: unless-stopped
     ports:
-      - "${APP_PORT:-8000}:80"
+      # Ouvert sur la machine seulement : le reverse proxy passe par le réseau Docker, et un appareil du réseau local,
+      # qui serait cru comme un proxy (adresse privée), ne peut pas forger l'IP du visiteur (limites de rythme).
+      # APP_BIND=0.0.0.0 rouvre le port au réseau local si le proxy tourne sur une autre machine.
+      - "${APP_BIND:-127.0.0.1}:${APP_PORT:-8000}:80"
     environment:
       APP_NAME: Tenpai
       APP_ENV: production
@@ -23,7 +26,9 @@ services:
       LOG_LEVEL: ${LOG_LEVEL:-info}
       DB_CONNECTION: sqlite
       DB_DATABASE: /data/database.sqlite
-      SESSION_DRIVER: file
+      # La session ne garde que le jeton CSRF et la page précédente : chiffrée et signée (APP_KEY) dans un cookie,
+      # elle n'écrit plus un fichier sur la carte SD à chaque visite, et un robot ne peut plus en remplir le disque.
+      SESSION_DRIVER: cookie
       CACHE_STORE: file
       QUEUE_CONNECTION: sync
       MAIL_MAILER: log
